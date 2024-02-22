@@ -7,7 +7,7 @@
     PLAY: 1,
     FINISH: 2,
   });
-  let content = `中華人民`;
+  let content = `快速測試並提高您的打字速度！ 一個好用的在線打字工具。可選測試：時間、單詞、自定義文本和 WPM 測試。`;
   let currentWordIndex = 0;
   let input = "";
   $: wrongWords = wrongIndexes.length;
@@ -116,6 +116,15 @@
   }
 </script>
 
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC&display=swap"
+    rel="stylesheet"
+  />
+</head>
+
 <div class="background">
   <div class="test-content">
     {#each content as char, index (index)}
@@ -162,6 +171,7 @@
 
   .test-content p {
     display: inline-block;
+    font-family: "Noto Serif TC";
     font-size: 2rem;
     margin: 2px;
     width: 2.5rem;
