@@ -7,7 +7,7 @@
     PLAY: 1,
     FINISH: 2,
   });
-  let content = `颱風彭梭`;
+  let content = `中華人民`;
   let currentWordIndex = 0;
   let input = "";
   $: wrongWords = wrongIndexes.length;
@@ -18,10 +18,10 @@
   let WPM = 0;
   let accuracy = 0;
   let textbox;
-  let dth = false;
 
-  $: contentArr = content;
   $: currentWord = content[currentWordIndex];
+  let timeElapsed = 0;
+  let updateTimerInterval = null;
 
   function toHalfWidth(x) {
     if (x === "。") return ".";
@@ -34,6 +34,15 @@
     if (gameState !== GameState.START) return;
     gameState = GameState.PLAY;
     startTime = Date.now();
+    updateTimerInterval = setInterval(updateTimer, 100);
+  }
+
+  function updateTimer(time = -1) {
+    if (time >= 0) {
+      timeElapsed = time;
+      return;
+    }
+    timeElapsed = Date.now() - startTime;
   }
 
   async function compoUpdate(e) {}
@@ -41,8 +50,9 @@
   function finishGame() {
     gameState = GameState.FINISH;
     timeTaken = Date.now() - startTime;
-    WPM = (content.length / timeTaken) * 60000;
-    accuracy = 1 - wrongWords / content.length;
+    console.log(wrongWords, content.length);
+    accuracy = 1 - wrongIndexes.length / content.length;
+    WPM = ((content.length * accuracy) / timeTaken) * 60000;
   }
 
   function wordCorrect(word) {
@@ -52,14 +62,18 @@
 
   function validateInput(word) {
     input = "";
-    if (wordCorrect(word)) {
+    console.log("word");
+
+    for (let i = 0; i < word.length; i++) {
+      currentWord = content[currentWordIndex];
+      const char = word[i];
+      if (!wordCorrect(char))
+        wrongIndexes = [...wrongIndexes, currentWordIndex];
+
       currentWordIndex++;
-    } else {
-      wrongIndexes = [...wrongIndexes, currentWordIndex];
-      currentWordIndex++;
-    }
-    if (currentWordIndex >= content.length) {
-      finishGame();
+      if (currentWordIndex >= content.length) {
+        finishGame();
+      }
     }
   }
 
@@ -70,27 +84,16 @@
   }
 
   function halfInput(e) {
-    if (e.data === " ") return;
+    // if (e.data === " ") return;
     if (e.inputType === "deleteContentBackward") return;
     if (e.inputType === "insertCompositionText") return;
     validateInput(e.data);
-    // input = "";
-    // console.log("half: ", e);
-    // if (wordCorrect(e.data)) {
-    //   currentWordIndex++;
-    // } else {
-    //   wrongWords++;
-    //   wrongIndexes = [...wrongIndexes, currentWordIndex];
-    //   currentWordIndex++;
-    // }
   }
 
   function tryDelete() {
     if (currentWordIndex === 0) return;
     currentWordIndex--;
     const wrongIndex = wrongIndexes.indexOf(currentWordIndex);
-    console.log(wrongIndexes);
-    console.log(wrongIndex);
     if (wrongIndex === -1) return;
     wrongIndexes.splice(wrongIndex, 1);
     wrongIndexes = wrongIndexes;
@@ -100,18 +103,6 @@
     if (gameState !== GameState.PLAY) return;
     if (!e.data) return;
     validateInput(e.data);
-    // input = "";
-    // if (wordCorrect(e.data)) {
-    //   currentWordIndex++;
-    // } else {
-    //   wrongWords++;
-    //   wrongIndexes = [...wrongIndexes, currentWordIndex];
-    //   currentWordIndex++;
-    // }
-    // if (currentWordIndex >= content.length) {
-    //   finishGame();
-    // }
-    // console.log("end", e);
   }
 
   function restart() {
@@ -120,6 +111,8 @@
     currentWordIndex = 0;
     input = "";
     textbox.focus();
+    clearInterval(updateTimerInterval);
+    updateTimer(0);
   }
 </script>
 
@@ -147,6 +140,9 @@
   />
   <button on:click={restart}>Restart</button>
   <p>{wrongWords}</p>
+  {#if gameState === GameState.PLAY}
+    <p>{Math.floor(timeElapsed / 1000)}</p>
+  {/if}
   {#if gameState === GameState.FINISH}
     <p>Time taken: {(timeTaken / 1000).toFixed(2) + "s"}</p>
     <p>WPM: {WPM.toFixed(1)}</p>
@@ -160,16 +156,28 @@
     height: 100vh;
   }
 
+  .test-content {
+    padding: 3% 2%;
+  }
+
   .test-content p {
     display: inline-block;
+    font-size: 2rem;
+    margin: 2px;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.416);
+    text-align: center;
+    vertical-align: middle;
   }
 
   .wrong {
     color: red;
   }
 
-  .current-char {
+  .test-content .current-char {
     color: skyblue;
+    border: 1px solid skyblue;
   }
 
   p {
