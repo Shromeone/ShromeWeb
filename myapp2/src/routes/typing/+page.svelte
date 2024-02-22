@@ -7,7 +7,7 @@
     PLAY: 1,
     FINISH: 2,
   });
-  let content = `快速測試並提高您的打字速度！ 一個好用的在線打字工具。可選測試：時間、單詞、自定義文本和 WPM 測試。`;
+  let content = `維基百科是一個多語言、內容自由、任何人都能參與的協作計劃，其目標是建立一個完整、準確且中立的百科全書。 中文維基百科的成長依靠您的參與，無論是創建新條目`;
   let currentWordIndex = 0;
   let input = "";
   $: wrongWords = wrongIndexes.length;
@@ -138,6 +138,8 @@
     {/each}
   </div>
   <input
+    class="type-input"
+    placeholder={gameState === GameState.PLAY ? "" : "在這裡開始打字"}
     on:compositionupdate={compoUpdate}
     on:compositionend={compoEnd}
     on:input={startTimer}
@@ -147,7 +149,15 @@
     bind:this={textbox}
     type="text"
   />
-  <button on:click={restart}>Restart</button>
+
+  {#if gameState !== GameState.PLAY}
+    <input
+      class="type-prep"
+      type="text"
+      placeholder="這裡可以調整輸入法，準備開始打字"
+    />
+  {/if}
+  <button class="restart-btn" on:click={restart}>重新開始</button>
   <p>{wrongWords}</p>
   {#if gameState === GameState.PLAY}
     <p>{Math.floor(timeElapsed / 1000)}</p>
@@ -195,5 +205,28 @@
   }
   .current-word {
     color: lightblue;
+  }
+
+  .type-input {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 3rem;
+  }
+
+  .type-prep {
+    font-size: 2rem;
+    width: 80%;
+    display: block;
+  }
+
+  .restart-btn {
+    padding: 1em;
+    font-size: 1rem;
+    border-radius: 1rem;
+    border: none;
+  }
+
+  .restart-btn:hover {
+    opacity: 80%;
   }
 </style>
