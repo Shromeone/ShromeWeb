@@ -1,15 +1,33 @@
 <script>
   // @ts-nocheck
 
-  import { tick } from "svelte";
+  import { onMount } from "svelte";
   const GameState = Object.freeze({
     START: 0,
     PLAY: 1,
     FINISH: 2,
   });
-  let content = `維基百科是一個多語言、內容自由、任何人都能參與的協作計劃，其目標是建立一個完整、準確且中立的百科全書。 中文維基百科的成長依靠您的參與，無論是創建新條目`;
+  let content = `慶曆四年春，滕子京謫守巴陵郡。越明年，政通人和，百廢具興。
+乃重修岳陽樓，增其舊制，刻唐賢、今人詩賦於其上；屬予作文以記
+之。
+予觀夫巴陵勝狀，在洞庭一湖。銜遠山，吞長江，浩浩湯湯，橫
+無際涯；朝暉夕陰，氣象萬千。此則岳陽樓之大觀也，前人之述備矣。
+然則北通巫峽，南極瀟湘，遷客騷人，多會於此，覽物之情，得無異
+乎？`;
+  // 若夫霪雨霏霏，連月不開；陰風怒號，濁浪排空；日星隱耀，山
+  // 岳潛形；商旅不行，檣傾楫摧；薄暮冥冥，虎嘯猿啼。登斯樓也，則
+  // 有去國懷鄉，憂讒畏譏，滿目蕭然，感極而悲者矣。
+  // 至若春和景明 ，波瀾不驚 ，上下天光，一碧萬頃；沙鷗翔集，錦
+  // 鱗游泳，岸芷汀蘭，郁郁青青。而或長煙一空，皓月千里，浮光躍金，
+  // 靜影沉璧；漁歌互答，此樂何極！登斯樓也，則有心曠神怡，寵辱皆
+  // 忘，把酒臨風，其喜洋洋者矣。
+  // 嗟夫！予嘗求古仁人之心，或異二者之為 。何哉？不以物喜，不
+  // 以己悲。居廟堂之高，則憂其民；處江湖之遠，則憂其君。是進亦憂，
+  // 退亦憂，然則何時 而樂耶？其必曰：「先天下之憂而憂，後天下之樂而
+  // 樂」歟！噫！微斯人，吾誰與歸！
+  // `;
   let currentWordIndex = 0;
-  let input = "";
+  $: input = inputBox.innerHTML;
   $: wrongWords = wrongIndexes.length;
   let wrongIndexes = [];
   let startTime = 0;
@@ -22,6 +40,11 @@
   $: currentWord = content[currentWordIndex];
   let timeElapsed = 0;
   let updateTimerInterval = null;
+  let inputBox;
+  onMount(() => {
+    content = content.replace(/(?:\r\n|\r|\n)/g, "");
+    inputBox.focus();
+  });
 
   function toHalfWidth(x) {
     if (x === "。") return ".";
@@ -129,7 +152,21 @@
   <div class="test-content">
     {#each content as char, index (index)}
       {#if index === currentWordIndex}
-        <p class="current-char">{char}</p>
+        <div class="current-char">
+          <p>{char}</p>
+          <p
+            contenteditable
+            type="text"
+            class="current-char-input"
+            placeholder={gameState === GameState.PLAY ? "" : "在這裡開始打字"}
+            on:compositionupdate={compoUpdate}
+            on:compositionend={compoEnd}
+            on:input={startTimer}
+            on:input={halfInput}
+            on:keydown={keyDown}
+            bind:this={inputBox}
+          ></p>
+        </div>
       {:else if wrongIndexes.includes(index)}
         <p class="wrong">{char}</p>
       {:else}
@@ -137,7 +174,7 @@
       {/if}
     {/each}
   </div>
-  <input
+  <!-- <input
     class="type-input"
     placeholder={gameState === GameState.PLAY ? "" : "在這裡開始打字"}
     on:compositionupdate={compoUpdate}
@@ -148,7 +185,7 @@
     bind:value={input}
     bind:this={textbox}
     type="text"
-  />
+  /> -->
 
   {#if gameState !== GameState.PLAY}
     <input
@@ -157,8 +194,10 @@
       placeholder="這裡可以調整輸入法，準備開始打字"
     />
   {/if}
-  <button class="restart-btn" on:click={restart}>重新開始</button>
   <p>{wrongWords}</p>
+  {#if gameState !== GameState.START}
+    <button class="restart-btn" on:click={restart}>重新開始</button>
+  {/if}
   {#if gameState === GameState.PLAY}
     <p>{Math.floor(timeElapsed / 1000)}</p>
   {/if}
@@ -167,16 +206,19 @@
     <p>WPM: {WPM.toFixed(1)}</p>
     <p>Accuracy: {(accuracy * 100).toFixed(1) + "%"}</p>
   {/if}
+
+  <p contenteditable="true">Hi</p>
 </div>
 
 <style>
   .background {
     background-color: black;
-    height: 100vh;
+    min-height: 100vh;
   }
 
   .test-content {
     padding: 3% 2%;
+    position: relative;
   }
 
   .test-content p {
@@ -195,7 +237,24 @@
     color: red;
   }
 
-  .test-content .current-char {
+  .current-char-input {
+    position: absolute;
+    bottom: -2rem;
+    left: 0;
+    background-color: black;
+    border: none;
+    color: white;
+    justify-content: center;
+    min-width: none;
+    width: 1rem;
+  }
+
+  .current-char {
+    display: inline-block;
+    position: relative;
+  }
+
+  .current-char p {
     color: skyblue;
     border: 1px solid skyblue;
   }
