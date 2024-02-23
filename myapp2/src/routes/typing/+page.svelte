@@ -1,19 +1,13 @@
 <script>
   // @ts-nocheck
 
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   const GameState = Object.freeze({
     START: 0,
     PLAY: 1,
     FINISH: 2,
   });
-  let content = `慶曆四年春，滕子京謫守巴陵郡。越明年，政通人和，百廢具興。
-乃重修岳陽樓，增其舊制，刻唐賢、今人詩賦於其上；屬予作文以記
-之。
-予觀夫巴陵勝狀，在洞庭一湖。銜遠山，吞長江，浩浩湯湯，橫
-無際涯；朝暉夕陰，氣象萬千。此則岳陽樓之大觀也，前人之述備矣。
-然則北通巫峽，南極瀟湘，遷客騷人，多會於此，覽物之情，得無異
-乎？`;
+  let content = `己己己己己己己`;
   // 若夫霪雨霏霏，連月不開；陰風怒號，濁浪排空；日星隱耀，山
   // 岳潛形；商旅不行，檣傾楫摧；薄暮冥冥，虎嘯猿啼。登斯樓也，則
   // 有去國懷鄉，憂讒畏譏，滿目蕭然，感極而悲者矣。
@@ -27,7 +21,7 @@
   // 樂」歟！噫！微斯人，吾誰與歸！
   // `;
   let currentWordIndex = 0;
-  $: input = inputBox.innerHTML;
+  let input;
   $: wrongWords = wrongIndexes.length;
   let wrongIndexes = [];
   let startTime = 0;
@@ -43,8 +37,13 @@
   let inputBox;
   onMount(() => {
     content = content.replace(/(?:\r\n|\r|\n)/g, "");
+    setInputBoxToParent();
     inputBox.focus();
   });
+
+  function clearInput() {
+    inputBox.innerHTML = "";
+  }
 
   function toHalfWidth(x) {
     if (x === "。") return ".";
@@ -53,7 +52,8 @@
     });
   }
 
-  function startTimer() {
+  function startTimer(e) {
+    console.log(e, currentWordIndex);
     if (gameState !== GameState.START) return;
     gameState = GameState.PLAY;
     startTime = Date.now();
@@ -83,10 +83,11 @@
     return correct;
   }
 
-  function validateInput(word) {
-    input = "";
-    console.log("word");
+  function setInputBoxToParent() {
+    document.querySelector(`#char-${currentWordIndex}`).appendChild(inputBox);
+  }
 
+  function validateInput(word) {
     for (let i = 0; i < word.length; i++) {
       currentWord = content[currentWordIndex];
       const char = word[i];
@@ -98,6 +99,21 @@
         finishGame();
       }
     }
+    clearInput();
+    setTimeout(() => {
+      setInputBoxToParent();
+      inputBox.focus();
+      console.log("focus");
+    }, 1000);
+    // tick().then(() => {
+    // });
+    // tick().then(() => {
+    //   clearInput();
+    //   tick().then(() => {
+    //     setInputBoxToParent();
+    //     // inputBox.focus();
+    //   });
+    // });
   }
 
   function keyDown(e) {
@@ -123,8 +139,10 @@
   }
 
   async function compoEnd(e) {
+    if (currentWordIndex === 1) return;
     if (gameState !== GameState.PLAY) return;
     if (!e.data) return;
+    console.log(e, currentWordIndex);
     validateInput(e.data);
   }
 
@@ -132,8 +150,9 @@
     gameState = GameState.START;
     wrongIndexes = [];
     currentWordIndex = 0;
-    input = "";
-    textbox.focus();
+    // input = "";
+    clearInput();
+    inputBox.focus();
     clearInterval(updateTimerInterval);
     updateTimer(0);
   }
@@ -149,29 +168,33 @@
 </head>
 
 <div class="background">
+  s
+  <p
+    contenteditable
+    type="text"
+    id="current-char-input"
+    placeholder={gameState === GameState.PLAY ? "" : "在這裡開始打字"}
+    on:compositionupdate={compoUpdate}
+    on:compositionend={compoEnd}
+    on:input={startTimer}
+    on:input={halfInput}
+    on:keydown={keyDown}
+    on:focusout={setInputBoxToParent}
+    bind:this={inputBox}
+  ></p>
   <div class="test-content">
     {#each content as char, index (index)}
-      {#if index === currentWordIndex}
-        <div class="current-char">
+      <div class="char" id="char-{index}">
+        {#if index === currentWordIndex}
+          <div class="current-char">
+            <p>{char}</p>
+          </div>
+        {:else if wrongIndexes.includes(index)}
+          <p class="wrong">{char}</p>
+        {:else}
           <p>{char}</p>
-          <p
-            contenteditable
-            type="text"
-            class="current-char-input"
-            placeholder={gameState === GameState.PLAY ? "" : "在這裡開始打字"}
-            on:compositionupdate={compoUpdate}
-            on:compositionend={compoEnd}
-            on:input={startTimer}
-            on:input={halfInput}
-            on:keydown={keyDown}
-            bind:this={inputBox}
-          ></p>
-        </div>
-      {:else if wrongIndexes.includes(index)}
-        <p class="wrong">{char}</p>
-      {:else}
-        <p>{char}</p>
-      {/if}
+        {/if}
+      </div>
     {/each}
   </div>
   <!-- <input
@@ -218,7 +241,6 @@
 
   .test-content {
     padding: 3% 2%;
-    position: relative;
   }
 
   .test-content p {
@@ -233,20 +255,28 @@
     vertical-align: middle;
   }
 
+  .char {
+    display: inline-block;
+    position: relative;
+  }
+
   .wrong {
     color: red;
   }
 
-  .current-char-input {
+  #current-char-input {
+    width: max-content;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 1rem;
     position: absolute;
     bottom: -2rem;
-    left: 0;
+    height: 2rem;
     background-color: black;
     border: none;
-    color: white;
-    justify-content: center;
-    min-width: none;
-    width: 1rem;
   }
 
   .current-char {
