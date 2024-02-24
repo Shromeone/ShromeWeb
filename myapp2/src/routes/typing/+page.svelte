@@ -29,20 +29,31 @@
   let timeTaken = 0;
   let WPM = 0;
   let accuracy = 0;
-  let textbox;
 
   $: currentWord = content[currentWordIndex];
   let timeElapsed = 0;
   let updateTimerInterval = null;
   let inputBox;
+  let inputDisplay;
+  const inputBoxOffset = {
+    x: 0,
+    y: 30,
+  };
   onMount(() => {
     content = content.replace(/(?:\r\n|\r|\n)/g, "");
     updateInputBoxPos();
     inputBox.focus();
+
+    document.onkeydown = (e) => {
+      if (document.activeElement === inputBox) return;
+      e.preventDefault();
+      inputBox.focus();
+    };
   });
 
   function clearInput() {
     input = "";
+    tick().then(() => (input = ""));
   }
 
   function toHalfWidth(x) {
@@ -52,7 +63,7 @@
     });
   }
 
-  function startTimer(e) {
+  function startTimer() {
     if (gameState !== GameState.START) return;
     gameState = GameState.PLAY;
     startTime = Date.now();
@@ -83,12 +94,11 @@
   }
 
   function updateInputBoxPos() {
-    const rect = document
-      .querySelector(`#char-${currentWordIndex}`)
-      .getBoundingClientRect();
-    console.log(rect);
-    inputBox.style.top = rect.top + "px";
-    inputBox.style.left = rect.left + "px";
+    const currentChar = document.querySelector(`#char-${currentWordIndex}`);
+    const rect = currentChar.getBoundingClientRect();
+    inputBox.style.top = rect.top + inputBoxOffset.y + "px";
+    inputBox.style.left = rect.left + inputBoxOffset.x + "px";
+    currentChar.appendChild(inputDisplay);
   }
 
   function validateInput(word) {
@@ -103,7 +113,9 @@
         finishGame();
       }
     }
-    clearInput();
+    console.log("clr");
+    tick().then(() => clearInput());
+    // clearInput();
     updateInputBoxPos();
     // inputBox.focus();
     console.log("focus");
@@ -116,14 +128,12 @@
   }
 
   function halfInput(e) {
-    // if (e.data === " ") return;
     if (e.inputType === "deleteContentBackward") return;
     if (e.inputType === "insertCompositionText") return;
     validateInput(e.data);
   }
 
   function tryDelete() {
-    // if (currentWordIndex === 0) return;
     currentWordIndex--;
     const wrongIndex = wrongIndexes.indexOf(currentWordIndex);
     if (wrongIndex === -1) return;
@@ -172,6 +182,13 @@
     bind:value={input}
     bind:this={inputBox}
   />
+  <div
+    id="input-display"
+    class={input ? "" : "hidden"}
+    bind:this={inputDisplay}
+  >
+    {input ? input : ""}
+  </div>
   <div class="test-content">
     {#each content as char, index (index)}
       <div class="char" id="char-{index}">
@@ -187,18 +204,6 @@
       </div>
     {/each}
   </div>
-  <!-- <input
-    class="type-input"
-    placeholder={gameState === GameState.PLAY ? "" : "在這裡開始打字"}
-    on:compositionupdate={compoUpdate}
-    on:compositionend={compoEnd}
-    on:input={startTimer}
-    on:input={halfInput}
-    on:keydown={keyDown}
-    bind:value={input}
-    bind:this={textbox}
-    type="text"
-  /> -->
 
   {#if gameState !== GameState.PLAY}
     <input
@@ -261,8 +266,33 @@
     left: 0;
     font-size: 1rem;
     height: 2rem;
-    background-color: black;
+    background-color: transparent;
     border: none;
+    overflow: hidden;
+    width: 0.1px;
+  }
+
+  #type-input:focus {
+    border: none;
+    outline: 0;
+    caret-color: rgba(0, 0, 0, 0);
+  }
+
+  #input-display:blank {
+    display: none;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  #input-display {
+    white-space: nowrap;
+    color: white;
+    position: absolute;
+    background-color: rgb(85, 85, 85);
+    text-align: left;
+    padding: 0.2rem 0.2rem;
   }
 
   .current-char {
