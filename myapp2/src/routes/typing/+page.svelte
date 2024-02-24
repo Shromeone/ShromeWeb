@@ -37,12 +37,12 @@
   let inputBox;
   onMount(() => {
     content = content.replace(/(?:\r\n|\r|\n)/g, "");
-    setInputBoxToParent();
+    updateInputBoxPos();
     inputBox.focus();
   });
 
   function clearInput() {
-    inputBox.innerHTML = "";
+    input = "";
   }
 
   function toHalfWidth(x) {
@@ -53,7 +53,6 @@
   }
 
   function startTimer(e) {
-    console.log(e, currentWordIndex);
     if (gameState !== GameState.START) return;
     gameState = GameState.PLAY;
     startTime = Date.now();
@@ -83,8 +82,13 @@
     return correct;
   }
 
-  function setInputBoxToParent() {
-    document.querySelector(`#char-${currentWordIndex}`).appendChild(inputBox);
+  function updateInputBoxPos() {
+    const rect = document
+      .querySelector(`#char-${currentWordIndex}`)
+      .getBoundingClientRect();
+    console.log(rect);
+    inputBox.style.top = rect.top + "px";
+    inputBox.style.left = rect.left + "px";
   }
 
   function validateInput(word) {
@@ -100,20 +104,9 @@
       }
     }
     clearInput();
-    setTimeout(() => {
-      setInputBoxToParent();
-      inputBox.focus();
-      console.log("focus");
-    }, 1000);
-    // tick().then(() => {
-    // });
-    // tick().then(() => {
-    //   clearInput();
-    //   tick().then(() => {
-    //     setInputBoxToParent();
-    //     // inputBox.focus();
-    //   });
-    // });
+    updateInputBoxPos();
+    // inputBox.focus();
+    console.log("focus");
   }
 
   function keyDown(e) {
@@ -130,7 +123,7 @@
   }
 
   function tryDelete() {
-    if (currentWordIndex === 0) return;
+    // if (currentWordIndex === 0) return;
     currentWordIndex--;
     const wrongIndex = wrongIndexes.indexOf(currentWordIndex);
     if (wrongIndex === -1) return;
@@ -139,10 +132,8 @@
   }
 
   async function compoEnd(e) {
-    if (currentWordIndex === 1) return;
     if (gameState !== GameState.PLAY) return;
     if (!e.data) return;
-    console.log(e, currentWordIndex);
     validateInput(e.data);
   }
 
@@ -168,20 +159,19 @@
 </head>
 
 <div class="background">
-  s
-  <p
-    contenteditable
+  <input
     type="text"
-    id="current-char-input"
+    id="type-input"
     placeholder={gameState === GameState.PLAY ? "" : "在這裡開始打字"}
     on:compositionupdate={compoUpdate}
     on:compositionend={compoEnd}
     on:input={startTimer}
     on:input={halfInput}
     on:keydown={keyDown}
-    on:focusout={setInputBoxToParent}
+    on:focusout={updateInputBoxPos}
+    bind:value={input}
     bind:this={inputBox}
-  ></p>
+  />
   <div class="test-content">
     {#each content as char, index (index)}
       <div class="char" id="char-{index}">
@@ -264,16 +254,12 @@
     color: red;
   }
 
-  #current-char-input {
-    width: max-content;
-    margin-left: auto;
-    margin-right: auto;
-    left: 0;
-    right: 0;
-    text-align: center;
-    font-size: 1rem;
+  #type-input {
     position: absolute;
-    bottom: -2rem;
+    color: white;
+    /* width: max-content; */
+    left: 0;
+    font-size: 1rem;
     height: 2rem;
     background-color: black;
     border: none;
