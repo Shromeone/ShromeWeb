@@ -7,22 +7,37 @@
     PLAY: 1,
     FINISH: 2,
   });
-  let content = `己己己己己己己`;
-  // 若夫霪雨霏霏，連月不開；陰風怒號，濁浪排空；日星隱耀，山
-  // 岳潛形；商旅不行，檣傾楫摧；薄暮冥冥，虎嘯猿啼。登斯樓也，則
-  // 有去國懷鄉，憂讒畏譏，滿目蕭然，感極而悲者矣。
-  // 至若春和景明 ，波瀾不驚 ，上下天光，一碧萬頃；沙鷗翔集，錦
-  // 鱗游泳，岸芷汀蘭，郁郁青青。而或長煙一空，皓月千里，浮光躍金，
-  // 靜影沉璧；漁歌互答，此樂何極！登斯樓也，則有心曠神怡，寵辱皆
-  // 忘，把酒臨風，其喜洋洋者矣。
-  // 嗟夫！予嘗求古仁人之心，或異二者之為 。何哉？不以物喜，不
-  // 以己悲。居廟堂之高，則憂其民；處江湖之遠，則憂其君。是進亦憂，
-  // 退亦憂，然則何時 而樂耶？其必曰：「先天下之憂而憂，後天下之樂而
-  // 樂」歟！噫！微斯人，吾誰與歸！
-  // `;
+  const removeContentSpace = true;
+  const mountainPoem = `若夫霪雨霏霏，連月不開；陰風怒號，濁浪排空；日星隱耀，山
+  岳潛形；商旅不行，檣傾楫摧；薄暮冥冥，虎嘯猿啼。登斯樓也，則
+  有去國懷鄉，憂讒畏譏，滿目蕭然，感極而悲者矣。
+  至若春和景明 ，波瀾不驚 ，上下天光，一碧萬頃；沙鷗翔集，錦
+  鱗游泳，岸芷汀蘭，郁郁青青。而或長煙一空，皓月千里，浮光躍金，
+  靜影沉璧；漁歌互答，此樂何極！登斯樓也，則有心曠神怡，寵辱皆
+  忘，把酒臨風，其喜洋洋者矣。
+  嗟夫！予嘗求古仁人之心，或異二者之為 。何哉？不以物喜，不
+  以己悲。居廟堂之高，則憂其民；處江湖之遠，則憂其君。是進亦憂，
+  退亦憂，然則何時 而樂耶？其必曰：「先天下之憂而憂，後天下之樂而
+  樂」歟！噫！微斯人，吾誰與歸！`;
+  let content = `  若夫霪雨霏霏，連月不開；陰風怒號，濁浪排空；日星隱耀，山
+  岳潛形；商旅不行，檣傾楫摧；薄暮冥冥，虎嘯猿啼。登斯樓也，則
+  有去國懷鄉，憂讒畏譏，滿目蕭然，感極而悲者矣。
+  至若春和景明 ，波瀾不驚 ，上下天光，一碧萬頃；沙鷗翔集，錦
+  鱗游泳，岸芷汀蘭，郁郁青青。而或長煙一空，皓月千里，浮光躍金，
+  靜影沉璧；漁歌互答，此樂何極！登斯樓也，則有心曠神怡，寵辱皆
+  忘，把酒臨風，其喜洋洋者矣。
+  嗟夫！予嘗求古仁人之心，或異二者之為 。何哉？不以物喜，不
+  以己悲。居廟堂之高，則憂其民；處江湖之遠，則憂其君。是進亦憂，
+  退亦憂，然則何時 而樂耶？其必曰：「先天下之憂而憂，後天下之樂而
+  樂」歟！噫！微斯人，吾誰與歸！
+  `;
+
   let currentWordIndex = 0;
   let input;
+
+  $: correctWords = correctIndexes.length;
   $: wrongWords = wrongIndexes.length;
+  let correctIndexes = [];
   let wrongIndexes = [];
   let startTime = 0;
   let gameState = GameState.START;
@@ -35,29 +50,38 @@
   let updateTimerInterval = null;
   let inputBox;
   let inputDisplay;
+  let typePrep;
+  let focused = false;
 
   let isCompo = false;
   $: showInputDisplay = isCompo && input !== "";
   const inputBoxOffset = {
     x: 0,
-    y: 30,
+    y: 20,
   };
   onMount(() => {
     content = content.replace(/(?:\r\n|\r|\n)/g, "");
+    if (removeContentSpace) content = content.replace(/\s/g, "");
     updateInputBoxPos();
     inputBox.focus();
-
     document.onkeydown = (e) => {
+      tryPressEnterFocus(e);
       if (document.activeElement === inputBox) return;
+      if (document.activeElement === typePrep) return;
       e.preventDefault();
       inputBox.focus();
     };
   });
 
+  function tryPressEnterFocus(e) {
+    if (document.activeElement !== typePrep) return;
+    if (e.key !== "Enter") return;
+    inputBox.focus();
+  }
+
   function clearInput() {
     inputBox.innerHTML = "";
     input = "";
-    tick().then(() => (input = ""));
   }
 
   function toHalfWidth(x) {
@@ -118,17 +142,17 @@
     if (e.inputType === "insertCompositionText") return;
     isCompo = false;
     validateInput(e.data);
-    tick().then(() => clearInput());
+    console.log("half input");
+    setTimeout(clearInput, 0);
   }
 
   function validateInput(word) {
-    console.log(showInputDisplay);
     for (let i = 0; i < word.length; i++) {
       currentWord = content[currentWordIndex];
       const char = word[i];
       if (!wordCorrect(char))
         wrongIndexes = [...wrongIndexes, currentWordIndex];
-
+      else correctIndexes = [...correctIndexes, currentWordIndex];
       currentWordIndex++;
       if (currentWordIndex >= content.length) {
         finishGame();
@@ -137,21 +161,14 @@
 
     clearInput();
     updateInputBoxPos();
-    tick().then(() => {});
-    // setTimeout(() => {
-    //   clearInput();
-    //   updateInputBoxPos();
-    // }, 0);
   }
 
   function tryDelete() {
     if (currentWordIndex === 0) return;
     currentWordIndex--;
-    const wrongIndex = wrongIndexes.indexOf(currentWordIndex);
-    if (wrongIndex === -1) return;
-    wrongIndexes.splice(wrongIndex, 1);
-    wrongIndexes = wrongIndexes;
     updateInputBoxPos();
+    wrongIndexes = wrongIndexes.filter((x) => x !== currentWordIndex);
+    correctIndexes = correctIndexes.filter((x) => x !== currentWordIndex);
   }
 
   async function compoEnd(e) {
@@ -182,6 +199,14 @@
 </head>
 
 <div class="background">
+  {#if gameState !== GameState.PLAY}
+    <input
+      class="type-prep"
+      type="text"
+      placeholder="這裡可以調整輸入法，準備開始打字(按Enter 進入測試)"
+      bind:this={typePrep}
+    />
+  {/if}
   <input
     type="text"
     id="type-input"
@@ -191,7 +216,8 @@
     on:input={startTimer}
     on:input={halfInput}
     on:keydown={keyDown}
-    on:focusout={updateInputBoxPos}
+    on:focus={() => (focused = true)}
+    on:focusout={() => (focused = false)}
     bind:value={input}
     bind:this={inputBox}
   />
@@ -206,11 +232,15 @@
     {#each content as char, index (index)}
       <div class="char" id="char-{index}">
         {#if index === currentWordIndex}
-          <div class="current-char">
-            <p>{char}</p>
+          <div class={focused ? "" : "inactive"}>
+            <div class="current-char">
+              <p>{char}</p>
+            </div>
           </div>
         {:else if wrongIndexes.includes(index)}
           <p class="wrong">{char}</p>
+        {:else if correctIndexes.includes(index)}
+          <p class="correct">{char}</p>
         {:else}
           <p>{char}</p>
         {/if}
@@ -218,13 +248,6 @@
     {/each}
   </div>
 
-  {#if gameState !== GameState.PLAY}
-    <input
-      class="type-prep"
-      type="text"
-      placeholder="這裡可以調整輸入法，準備開始打字"
-    />
-  {/if}
   <p>{wrongWords}</p>
   {#if gameState !== GameState.START}
     <button class="restart-btn" on:click={restart}>重新開始</button>
@@ -272,6 +295,10 @@
     color: red;
   }
 
+  .correct {
+    color: rgb(101, 196, 101);
+  }
+
   #type-input {
     position: absolute;
     color: white;
@@ -290,23 +317,24 @@
     caret-color: rgba(0, 0, 0, 0);
   }
 
-  #input-display:blank {
-    display: none;
-  }
-
   .hidden {
     display: none;
   }
 
   #input-display {
+    z-index: 3;
     white-space: nowrap;
     color: white;
     position: absolute;
     background-color: rgb(85, 85, 85);
     text-align: left;
     padding: 0.2rem 0.2rem;
+    opacity: 100%;
   }
 
+  #input-display:blank {
+    display: none;
+  }
   .current-char {
     display: inline-block;
     position: relative;
@@ -315,6 +343,11 @@
   .current-char p {
     color: skyblue;
     border: 1px solid skyblue;
+  }
+
+  .inactive p {
+    border-color: grey;
+    color: grey;
   }
 
   p {
