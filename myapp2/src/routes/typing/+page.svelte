@@ -35,6 +35,9 @@
   let updateTimerInterval = null;
   let inputBox;
   let inputDisplay;
+
+  let isCompo = false;
+  $: showInputDisplay = isCompo && input !== "";
   const inputBoxOffset = {
     x: 0,
     y: 30,
@@ -52,6 +55,7 @@
   });
 
   function clearInput() {
+    inputBox.innerHTML = "";
     input = "";
     tick().then(() => (input = ""));
   }
@@ -63,7 +67,7 @@
     });
   }
 
-  function startTimer() {
+  function startTimer(e) {
     if (gameState !== GameState.START) return;
     gameState = GameState.PLAY;
     startTime = Date.now();
@@ -78,7 +82,9 @@
     timeElapsed = Date.now() - startTime;
   }
 
-  async function compoUpdate(e) {}
+  async function compoUpdate(e) {
+    isCompo = true;
+  }
 
   function finishGame() {
     gameState = GameState.FINISH;
@@ -101,7 +107,22 @@
     currentChar.appendChild(inputDisplay);
   }
 
+  function keyDown(e) {
+    if (e.key === "Backspace") {
+      tryDelete();
+    }
+  }
+
+  function halfInput(e) {
+    if (e.inputType === "deleteContentBackward") return;
+    if (e.inputType === "insertCompositionText") return;
+    isCompo = false;
+    validateInput(e.data);
+    tick().then(() => clearInput());
+  }
+
   function validateInput(word) {
+    console.log(showInputDisplay);
     for (let i = 0; i < word.length; i++) {
       currentWord = content[currentWordIndex];
       const char = word[i];
@@ -113,32 +134,24 @@
         finishGame();
       }
     }
-    console.log("clr");
-    tick().then(() => clearInput());
-    // clearInput();
+
+    clearInput();
     updateInputBoxPos();
-    // inputBox.focus();
-    console.log("focus");
-  }
-
-  function keyDown(e) {
-    if (e.key === "Backspace") {
-      tryDelete();
-    }
-  }
-
-  function halfInput(e) {
-    if (e.inputType === "deleteContentBackward") return;
-    if (e.inputType === "insertCompositionText") return;
-    validateInput(e.data);
+    tick().then(() => {});
+    // setTimeout(() => {
+    //   clearInput();
+    //   updateInputBoxPos();
+    // }, 0);
   }
 
   function tryDelete() {
+    if (currentWordIndex === 0) return;
     currentWordIndex--;
     const wrongIndex = wrongIndexes.indexOf(currentWordIndex);
     if (wrongIndex === -1) return;
     wrongIndexes.splice(wrongIndex, 1);
     wrongIndexes = wrongIndexes;
+    updateInputBoxPos();
   }
 
   async function compoEnd(e) {
@@ -184,10 +197,10 @@
   />
   <div
     id="input-display"
-    class={input ? "" : "hidden"}
+    class={showInputDisplay ? "" : "hidden"}
     bind:this={inputDisplay}
   >
-    {input ? input : ""}
+    {showInputDisplay ? input : ""}
   </div>
   <div class="test-content">
     {#each content as char, index (index)}
@@ -262,7 +275,6 @@
   #type-input {
     position: absolute;
     color: white;
-    /* width: max-content; */
     left: 0;
     font-size: 1rem;
     height: 2rem;
