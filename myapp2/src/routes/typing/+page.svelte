@@ -1,8 +1,9 @@
 <script>
   // @ts-nocheck
 
-  import { moonPoem } from "./passages.json";
+  import { englishTest } from "./passages.json";
   import { onMount, tick } from "svelte";
+  import { charPoints, bonus } from "./bonus-points.json";
   const GameState = Object.freeze({
     START: 0,
     PLAY: 1,
@@ -10,7 +11,7 @@
   });
   const removeContentSpace = true;
 
-  let content = moonPoem;
+  let content = englishTest;
 
   let currentWordIndex = 0;
   let input;
@@ -35,7 +36,8 @@
   let focused = false;
 
   let isCompo = false;
-  const timeLimit = 5;
+  const timeLimit = 1;
+  let points;
   $: showInputDisplay = isCompo && input !== "";
   const scrollDeadzone = 500;
   const scrollOffset = 100;
@@ -111,6 +113,7 @@
     gameState = GameState.FINISH;
     console.log(wrongWords, content.length);
     updateInfo();
+    calcFinalPoints();
   }
 
   function updateInfo() {
@@ -162,17 +165,64 @@
     for (let i = 0; i < word.length; i++) {
       currentWord = content[currentWordIndex];
       const char = word[i];
-      if (!wordCorrect(char))
+      if (!wordCorrect(char)) {
         wrongIndexes = [...wrongIndexes, currentWordIndex];
-      else correctIndexes = [...correctIndexes, currentWordIndex];
+      } else {
+        correctIndexes = [...correctIndexes, currentWordIndex];
+      }
       currentWordIndex++;
       if (currentWordIndex >= content.length) {
         finishGame();
       }
     }
+    calcTempPoints();
     updateScroll();
     clearInput();
     updateInputBoxPos();
+  }
+
+  function calcTempPoints() {
+    points =
+      correctIndexes.length * charPoints.correct +
+      wrongIndexes.length * charPoints.wrong;
+  }
+
+  function calcFinalPoints() {
+    const accuracyPoint = getAccuracyPoint();
+    const speedPoint = getSpeedPoint();
+
+    points =
+      correctIndexes.length * charPoints.correct +
+      wrongIndexes.length * charPoints.wrong +
+      accuracyPoint +
+      speedPoint;
+  }
+
+  function getSpeedPoint() {
+    const speedPoints = Object.keys(bonus.speed);
+    speedPoints.sort((a, b) => Number(b) - Number(a));
+    for (let speed of speedPoints) {
+      console.log(WPM, Number(speed));
+      if (WPM >= Number(speed)) {
+        console.log(`speed: ${bonus.speed[speed]}`);
+        return bonus.speed[speed];
+      }
+    }
+    return 0;
+  }
+
+  function getAccuracyPoint() {
+    const accuracyPoints = Object.keys(bonus.accuracy);
+    accuracyPoints.sort((a, b) => Number(b) - Number(a));
+    for (let accu of accuracyPoints) {
+      console.log(accuracy * 100, Number(accu));
+      if (accuracy * 100 >= Number(accu)) {
+        console.log(`accu: ${bonus.accuracy[accu]}`);
+        return bonus.accuracy[accu];
+      }
+    }
+
+    return 0;
   }
 
   function tryDelete() {
@@ -231,6 +281,9 @@
       <p>Time taken: {(timeTaken / 1000).toFixed(2) + "s"}</p>
       <p>WPM: {WPM.toFixed(1)}</p>
       <p>Accuracy: {(accuracy * 100).toFixed(1) + "%"}</p>
+      <p>Correct: {correctWords}</p>
+      <p>Wrong: {wrongWords}</p>
+      <p>Points : {points}</p>
     {/if}
   </div>
   <input
@@ -290,6 +343,7 @@
 
   .info-bar {
     display: flex;
+    gap: 20px;
   }
 
   .test-content {
