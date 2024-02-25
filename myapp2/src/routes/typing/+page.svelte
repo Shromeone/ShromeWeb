@@ -28,13 +28,14 @@
   $: currentWord = content[currentWordIndex];
   let timeElapsed = 0;
   let updateTimerInterval = null;
+  let updateInfoInterval = null;
   let inputBox;
   let inputDisplay;
   let typePrep;
   let focused = false;
 
   let isCompo = false;
-  const timeLimit = 3;
+  const timeLimit = 5;
   $: showInputDisplay = isCompo && input !== "";
   const scrollDeadzone = 500;
   const scrollOffset = 100;
@@ -76,8 +77,10 @@
 
   function startTimer(e) {
     if (gameState !== GameState.START) return;
+    timeTaken = 0;
     gameState = GameState.PLAY;
     startTime = Date.now();
+    updateInfoInterval = setInterval(updateInfo, 2000);
     updateTimerInterval = setInterval(updateTimer, 100);
   }
 
@@ -104,11 +107,18 @@
 
   function finishGame() {
     clearInterval(updateTimerInterval);
+    clearInterval(updateInfoInterval);
     gameState = GameState.FINISH;
-    timeTaken = Date.now() - startTime;
     console.log(wrongWords, content.length);
-    const wordsTyped = correctWords + wrongWords;
-    accuracy = 1 - wrongIndexes.length / wordsTyped;
+    updateInfo();
+  }
+
+  function updateInfo() {
+    timeTaken = Date.now() - startTime;
+    const wrongs = wrongIndexes.length;
+    const corrects = correctIndexes.length;
+    const wordsTyped = corrects + wrongs;
+    accuracy = 1 - wrongs / wordsTyped;
     WPM = ((wordsTyped * accuracy) / timeTaken) * 60000;
   }
 
@@ -182,13 +192,18 @@
 
   function restart() {
     gameState = GameState.START;
+    timeTaken = 0;
     wrongIndexes = [];
+    correctIndexes = [];
     currentWordIndex = 0;
     // input = "";
     clearInput();
     inputBox.focus();
     clearInterval(updateTimerInterval);
+    clearInterval(updateInfoInterval);
     updateTimer(0);
+    updateInputBoxPos();
+    updateScroll();
   }
 </script>
 
@@ -210,6 +225,14 @@
       bind:this={typePrep}
     />
   {/if}
+  <div class="info-bar">
+    {#if gameState !== 3}
+      <p>Time Left: {Math.ceil(timeLimit - timeElapsed / 1000)}</p>
+      <p>Time taken: {(timeTaken / 1000).toFixed(2) + "s"}</p>
+      <p>WPM: {WPM.toFixed(1)}</p>
+      <p>Accuracy: {(accuracy * 100).toFixed(1) + "%"}</p>
+    {/if}
+  </div>
   <input
     type="text"
     id="type-input"
@@ -251,26 +274,22 @@
     {/each}
   </div>
 
-  <p>{wrongWords}</p>
   {#if gameState !== GameState.START}
     <button class="restart-btn" on:click={restart}>重新開始</button>
   {/if}
   {#if gameState === GameState.PLAY}
     <p>{Math.floor(timeElapsed / 1000)}</p>
   {/if}
-  {#if gameState === GameState.FINISH}
-    <p>Time taken: {(timeTaken / 1000).toFixed(2) + "s"}</p>
-    <p>WPM: {WPM.toFixed(1)}</p>
-    <p>Accuracy: {(accuracy * 100).toFixed(1) + "%"}</p>
-  {/if}
-
-  <p contenteditable="true">Hi</p>
 </div>
 
 <style>
   .background {
     background-color: black;
     min-height: 100vh;
+  }
+
+  .info-bar {
+    display: flex;
   }
 
   .test-content {
@@ -355,15 +374,6 @@
 
   p {
     color: white;
-  }
-  .current-word {
-    color: lightblue;
-  }
-
-  .type-input {
-    font-size: 3rem;
-    display: block;
-    margin-bottom: 3rem;
   }
 
   .type-prep {
