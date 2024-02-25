@@ -1,7 +1,7 @@
 <script>
   // @ts-nocheck
 
-  import { englishTest } from "./passages.json";
+  import { mountainPoem } from "./passages.json";
   import { onMount, tick } from "svelte";
   import { charPoints, bonus } from "./bonus-points.json";
   const GameState = Object.freeze({
@@ -11,7 +11,7 @@
   });
   const removeContentSpace = true;
 
-  let content = englishTest;
+  let content = mountainPoem;
 
   let currentWordIndex = 0;
   let input;
@@ -30,14 +30,23 @@
   let timeElapsed = 0;
   let updateTimerInterval = null;
   let updateInfoInterval = null;
+
   let inputBox;
   let inputDisplay;
   let typePrep;
+  let resultsScreen;
+
   let focused = false;
 
   let isCompo = false;
-  const timeLimit = 1;
+  const timeLimit = 15;
   let points;
+  let accuracyPoint;
+  let speedPoint;
+  let accuracyCutoff;
+  let speedCutoff;
+
+  let isTimeUp = false;
   $: showInputDisplay = isCompo && input !== "";
   const scrollDeadzone = 500;
   const scrollOffset = 100;
@@ -79,6 +88,7 @@
 
   function startTimer(e) {
     if (gameState !== GameState.START) return;
+    isTimeUp = false;
     timeTaken = 0;
     gameState = GameState.PLAY;
     startTime = Date.now();
@@ -100,6 +110,7 @@
   }
 
   function timeUp() {
+    isTimeUp = true;
     finishGame();
   }
 
@@ -114,10 +125,11 @@
     console.log(wrongWords, content.length);
     updateInfo();
     calcFinalPoints();
+    setResultsPanelVisibility(true);
   }
 
   function updateInfo() {
-    timeTaken = Date.now() - startTime;
+    timeTaken = isTimeUp ? timeLimit * 1000 : Date.now() - startTime;
     const wrongs = wrongIndexes.length;
     const corrects = correctIndexes.length;
     const wordsTyped = corrects + wrongs;
@@ -175,10 +187,11 @@
         finishGame();
       }
     }
-    calcTempPoints();
     updateScroll();
     clearInput();
     updateInputBoxPos();
+
+    if (gameState !== GameState.FINISH) calcTempPoints();
   }
 
   function calcTempPoints() {
@@ -188,14 +201,16 @@
   }
 
   function calcFinalPoints() {
-    const accuracyPoint = getAccuracyPoint();
-    const speedPoint = getSpeedPoint();
+    accuracyPoint = getAccuracyPoint();
+    speedPoint = getSpeedPoint();
 
     points =
       correctIndexes.length * charPoints.correct +
       wrongIndexes.length * charPoints.wrong +
       accuracyPoint +
       speedPoint;
+
+    console.log(`points: ${points}`);
   }
 
   function getSpeedPoint() {
@@ -205,6 +220,7 @@
       console.log(WPM, Number(speed));
       if (WPM >= Number(speed)) {
         console.log(`speed: ${bonus.speed[speed]}`);
+        speedCutoff = speed;
         return bonus.speed[speed];
       }
     }
@@ -218,6 +234,7 @@
       console.log(accuracy * 100, Number(accu));
       if (accuracy * 100 >= Number(accu)) {
         console.log(`accu: ${bonus.accuracy[accu]}`);
+        accuracyCutoff = accu;
         return bonus.accuracy[accu];
       }
     }
@@ -254,6 +271,14 @@
     updateTimer(0);
     updateInputBoxPos();
     updateScroll();
+  }
+
+  function setResultsPanelVisibility(show = false) {
+    if (show) {
+      resultsScreen.classList.remove("hidden");
+    } else {
+      resultsScreen.classList.add("hidden");
+    }
   }
 </script>
 
@@ -333,9 +358,69 @@
   {#if gameState === GameState.PLAY}
     <p>{Math.floor(timeElapsed / 1000)}</p>
   {/if}
+
+  <div class="results-screen" bind:this={resultsScreen}>
+    <div class="results-panel">
+      <p>準確度：{(accuracy * 100).toFixed(1) + "%"}</p>
+      <p>速度：{WPM.toFixed(1)}WPM</p>
+      <p>正確：{correctIndexes.length}字</p>
+      <p>錯誤：{wrongIndexes.length}字</p>
+      <p>分數：{points}</p>
+      <p>
+        正確加分：{correctIndexes.length}*{charPoints.correct}={correctIndexes.length *
+          charPoints.correct}
+      </p>
+      <p>
+        錯誤扣分：{wrongIndexes.length}*{charPoints.wrong}={wrongIndexes.length *
+          charPoints.wrong}
+      </p>
+      <p>
+        準確度加分：{accuracyPoint}
+        {#if accuracyPoint > 0}
+          ({accuracyCutoff}%或以上)
+        {/if}
+      </p>
+      <p>
+        速度加分：{speedPoint}
+        {#if speedPoint > 0}
+          ({speedCutoff}WPM或以上)
+        {/if}
+      </p>
+      <button
+        class="close-btn"
+        on:click={() => setResultsPanelVisibility(false)}>關閉</button
+      >
+    </div>
+  </div>
 </div>
 
 <style>
+  .results-screen {
+    opacity: 100%;
+    position: fixed;
+    display: flex;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.258);
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+  }
+
+  .results-panel {
+    background-color: rgb(91, 97, 148);
+    width: 40vw;
+    padding: 4em;
+    border-radius: 2rem;
+    border: 3px dashed rgb(38, 38, 84);
+    box-shadow: 0px 0px 30px black;
+    justify-content: center;
+  }
+
+  .close-btn {
+  }
   .background {
     background-color: black;
     min-height: 100vh;
@@ -394,7 +479,8 @@
   }
 
   .hidden {
-    display: none;
+    visibility: hidden;
+    opacity: 0%;
   }
 
   #input-display {
