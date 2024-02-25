@@ -1,6 +1,7 @@
 <script>
   // @ts-nocheck
 
+  import { moonPoem } from "./passages.json";
   import { onMount, tick } from "svelte";
   const GameState = Object.freeze({
     START: 0,
@@ -8,97 +9,8 @@
     FINISH: 2,
   });
   const removeContentSpace = true;
-  const mountainPoem = `若夫霪雨霏霏，連月不開；陰風怒號，濁浪排空；日星隱耀，山
-  岳潛形；商旅不行，檣傾楫摧；薄暮冥冥，虎嘯猿啼。登斯樓也，則
-  有去國懷鄉，憂讒畏譏，滿目蕭然，感極而悲者矣。
-  至若春和景明 ，波瀾不驚 ，上下天光，一碧萬頃；沙鷗翔集，錦
-  鱗游泳，岸芷汀蘭，郁郁青青。而或長煙一空，皓月千里，浮光躍金，
-  靜影沉璧；漁歌互答，此樂何極！登斯樓也，則有心曠神怡，寵辱皆
-  忘，把酒臨風，其喜洋洋者矣。
-  嗟夫！予嘗求古仁人之心，或異二者之為 。何哉？不以物喜，不
-  以己悲。居廟堂之高，則憂其民；處江湖之遠，則憂其君。是進亦憂，
-  退亦憂，然則何時 而樂耶？其必曰：「先天下之憂而憂，後天下之樂而
-  樂」歟！噫！微斯人，吾誰與歸！`;
-  const twoPeoplePoem = `廉頗者，趙之良將也。趙惠文王十六年，廉頗為趙將伐齊，
-大破之，取陽晉，拜為上卿，以勇氣聞於諸侯。藺相如者，趙人
-也，為趙宦者令繆賢舍人。
-趙惠文王時，得楚和氏璧。秦昭王聞之，使人遺趙王書，願
-以十五城請易璧。趙王與大將軍廉頗諸大臣謀：欲予秦，秦城恐
-不可得，徒見欺；欲勿予，即患秦兵之來。計未定，求人可使報
-秦者，未得。宦者令繆賢曰：「臣舍人藺相如可使。」王問：「何
-以知之？」對曰：「臣嘗有罪，竊計欲亡走燕，臣舍人相如止臣，
-曰：『君何以知燕王？』臣語曰：『臣嘗從大王與燕王會境上，燕
-王私握臣手，曰：「願結友。」以此知之，故欲往。』相如謂臣曰：
-『夫趙彊而燕弱，而君幸於趙王，故燕王欲結於君。今君乃亡趙
-走燕，燕畏趙，其勢必不敢留君，而束君歸趙矣。君不如肉袒伏
-斧質請罪，則幸得脫矣。』臣從其計，大王亦幸赦臣。臣竊以為
-其人勇士，有智謀，宜可使。」於是王召見，問藺相如曰：「秦王
-以十五城請易寡人之璧，可予不？」相如曰：「秦彊而趙弱，不可
-不許。」王曰：「取吾璧，不予我城，奈何？」相如曰：「秦以城
-求璧而趙不許，曲在趙；趙予璧而秦不予趙城，曲在秦。均之二
-策，寧許以負秦曲。」王曰：「誰可使者？」相如曰：「王必無人，
-臣願奉璧往使。城入趙而璧留秦；城不入，臣請完璧歸趙。」趙
-王於是遂遣相如奉璧西入秦。
-秦王坐章臺見相如，相如奉璧奏秦王。秦王大喜，傳以示美
-人及左右，左右皆呼萬歲。相如視秦王無意償趙城，乃前曰：「璧
-有瑕，請指示王。」王授璧，相如因持璧卻立，倚柱，怒髮上衝
-2
-冠，謂秦王曰：「大王欲得璧，使人發書至趙王，趙王悉召羣臣
-議，皆曰：『秦貪，負其彊，以空言求璧，償城恐不可得。』議不
-欲予秦璧。臣以為布衣之交尚不相欺，況大國乎！且以一璧之故
-逆彊秦之驩，不可。於是趙王乃齋戒五日，使臣奉璧，拜送書於
-庭。何者？嚴大國之威以修敬也。今臣至，大王見臣列觀，禮節
-甚倨；得璧，傳之美人，以戲弄臣。臣觀大王無意償趙王城邑，
-故臣復取璧。大王必欲急臣，臣頭今與璧俱碎於柱矣！」相如持
-其璧睨柱，欲以擊柱。秦王恐其破璧，乃辭謝固請，召有司案圖，
-指從此以往十五都予趙。相如度秦王特以詐佯為予趙城，實不可
-得，乃謂秦王曰：「和氏璧，天下所共傳寶也。趙王恐，不敢不
-獻。趙王送璧時，齋戒五日，今大王亦宜齋戒五日，設九賓於廷，
-臣乃敢上璧。」秦王度之，終不可彊奪，遂許齋五日，舍相如廣
-成傳。相如度秦王雖齋，決負約不償城，乃使其從者衣褐，懷其
-璧，從徑道亡，歸璧於趙。
-秦王齋五日後，乃設九賓禮於廷，引趙使者藺相如。相如至，
-謂秦王曰：「秦自繆公以來二十餘君，未嘗有堅明約束者也。臣
-誠恐見欺於王而負趙，故令人持璧歸，間至趙矣。且秦彊而趙弱，
-大王遣一介之使至趙，趙立奉璧來；今以秦之彊而先割十五都予
-趙，趙豈敢留璧而得罪於大王乎？臣知欺大王之罪當誅，臣請就
-湯鑊。唯大王與羣臣孰計議之！」秦王與羣臣相視而嘻。左右或
-欲引相如去，秦王因曰：「今殺相如，終不能得璧也，而絕秦趙之
-驩，不如因而厚遇之，使歸趙，趙王豈以一璧之故欺秦邪！」卒
-廷見相如，畢禮而歸之。相如既歸，趙王以為賢大夫，使不辱於
-諸侯，拜相如為上大夫。秦亦不以城予趙，趙亦終不予秦璧。
-其後秦伐趙，拔石城。明年，復攻趙，殺二萬人。秦王使使
-3
-者告趙王，欲與王為好會於西河外澠池。趙王畏秦，欲毋行。廉
-頗、藺相如計曰：「王不行，示趙弱且怯也。」趙王遂行，相如從。
-廉頗送至境，與王訣曰：「王行，度道里會遇之禮畢，還，不過三
-十日。三十日不還，則請立太子為王，以絕秦望。」王許之，遂
-與秦王會澠池。秦王飲酒酣，曰：「寡人竊聞趙王好音，請奏瑟。」
-趙王鼓瑟。秦御史前書曰：「某年月日，秦王與趙王會飲，令趙王
-鼓瑟。」藺相如前曰：「趙王竊聞秦王善為秦聲，請奏盆缻秦王，
-以相娛樂。」秦王怒，不許。於是相如前進缻，因跪請秦王。秦
-王不肯擊缻。相如曰：「五步之內，相如請得以頸血濺大王矣！」
-左右欲刃相如，相如張目叱之，左右皆靡。於是秦王不懌，為一
-擊缻。相如顧召趙御史書曰：「某年月日，秦王為趙王擊缻。」秦
-之羣臣曰：「請以趙十五城為秦王壽。」藺相如亦曰：「請以秦之
-咸陽為趙王壽。」秦王竟酒，終不能加勝於趙。趙亦盛設兵以待
-秦，秦不敢動。
-既罷歸國，以相如功大，拜為上卿，位在廉頗之右。廉頗曰：
-「我為趙將，有攻城野戰之大功，而藺相如徒以口舌為勞，而位
-居我上，且相如素賤人，吾羞，不忍為之下。」宣言曰：「我見相
-如，必辱之。」相如聞，不肯與會。相如每朝時，常稱病，不欲
-與廉頗爭列。已而相如出，望見廉頗，相如引車避匿。於是舍人
-相與諫曰：「臣所以去親戚而事君者，徒慕君之高義也。今君與
-廉頗同列，廉君宣惡言而君畏匿之，恐懼殊甚，且庸人尚羞之，
-況於將相乎！臣等不肖，請辭去。」藺相如固止之，曰：「公之視
-廉將軍孰與秦王？」曰：「不若也。」相如曰：「夫以秦王之威，
-而相如廷叱之，辱其羣臣，相如雖駑，獨畏廉將軍哉？顧吾念之，
-彊秦之所以不敢加兵於趙者，徒以吾兩人在也。今兩虎共鬥，其
-4
-勢不俱生。吾所以為此者，以先國家之急而後私讎也。」廉頗聞
-之，肉袒負荊，因賓客至藺相如門謝罪。曰：「鄙賤之人，不知將
-軍寬之至此也。」卒相與驩，為刎頸之交。`;
-  let content = twoPeoplePoem;
+
+  let content = moonPoem;
 
   let currentWordIndex = 0;
   let input;
@@ -122,6 +34,7 @@
   let focused = false;
 
   let isCompo = false;
+  const timeLimit = 3;
   $: showInputDisplay = isCompo && input !== "";
   const scrollDeadzone = 500;
   const scrollOffset = 100;
@@ -174,6 +87,15 @@
       return;
     }
     timeElapsed = Date.now() - startTime;
+
+    const timeElapsedInSec = timeElapsed / 1000;
+    if (timeElapsedInSec > timeLimit) {
+      timeUp();
+    }
+  }
+
+  function timeUp() {
+    finishGame();
   }
 
   async function compoUpdate(e) {
@@ -181,11 +103,13 @@
   }
 
   function finishGame() {
+    clearInterval(updateTimerInterval);
     gameState = GameState.FINISH;
     timeTaken = Date.now() - startTime;
     console.log(wrongWords, content.length);
-    accuracy = 1 - wrongIndexes.length / content.length;
-    WPM = ((content.length * accuracy) / timeTaken) * 60000;
+    const wordsTyped = correctWords + wrongWords;
+    accuracy = 1 - wrongIndexes.length / wordsTyped;
+    WPM = ((wordsTyped * accuracy) / timeTaken) * 60000;
   }
 
   function wordCorrect(word) {
@@ -212,20 +136,19 @@
     if (e.inputType === "insertCompositionText") return;
     isCompo = false;
     validateInput(e.data);
-    console.log("half input");
     setTimeout(clearInput, 0);
   }
 
   function updateScroll() {
     const currentChar = document.querySelector(`#char-${currentWordIndex}`);
     const y = currentChar.getBoundingClientRect().top + scrollY;
-    console.log(y, scrollY);
     if (Math.abs(scrollY - y) < scrollDeadzone) return;
     console.log("scroll");
     scroll({ top: y - scrollOffset, behavior: "smooth" });
   }
 
   function validateInput(word) {
+    if (gameState === GameState.FINISH) return;
     for (let i = 0; i < word.length; i++) {
       currentWord = content[currentWordIndex];
       const char = word[i];
@@ -243,6 +166,7 @@
   }
 
   function tryDelete() {
+    if (gameState === GameState.FINISH) return;
     if (currentWordIndex === 0) return;
     currentWordIndex--;
     updateInputBoxPos();
