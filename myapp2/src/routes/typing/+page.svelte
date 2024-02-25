@@ -1,7 +1,7 @@
 <script>
   // @ts-nocheck
 
-  import { mountainPoem } from "./passages.json";
+  import { nintendoWiki } from "./passages.json";
   import { onMount, tick } from "svelte";
   import { charPoints, bonus } from "./bonus-points.json";
   const GameState = Object.freeze({
@@ -11,7 +11,7 @@
   });
   const removeContentSpace = true;
 
-  let content = mountainPoem;
+  let content = nintendoWiki;
 
   let currentWordIndex = 0;
   let input;
@@ -39,7 +39,7 @@
   let focused = false;
 
   let isCompo = false;
-  const timeLimit = 15;
+  const timeLimit = 60;
   let points;
   let accuracyPoint;
   let speedPoint;
@@ -302,13 +302,13 @@
   {/if}
   <div class="info-bar">
     {#if gameState !== 3}
-      <p>Time Left: {Math.ceil(timeLimit - timeElapsed / 1000)}</p>
-      <p>Time taken: {(timeTaken / 1000).toFixed(2) + "s"}</p>
-      <p>WPM: {WPM.toFixed(1)}</p>
-      <p>Accuracy: {(accuracy * 100).toFixed(1) + "%"}</p>
-      <p>Correct: {correctWords}</p>
-      <p>Wrong: {wrongWords}</p>
-      <p>Points : {points}</p>
+      <p>剩餘時間: {Math.ceil(timeLimit - timeElapsed / 1000)}秒</p>
+      <p>時間: {(timeTaken / 1000).toFixed(2) + "s"}</p>
+      <p>速度: {WPM.toFixed(1)}WPM</p>
+      <p>準確度: {(accuracy * 100).toFixed(1) + "%"}</p>
+      <p>正確: {correctWords}字</p>
+      <p>錯誤: {wrongWords}字</p>
+      <p>分數: {points}</p>
     {/if}
   </div>
   <input
@@ -361,35 +361,40 @@
 
   <div class="results-screen" bind:this={resultsScreen}>
     <div class="results-panel">
-      <p>準確度：{(accuracy * 100).toFixed(1) + "%"}</p>
-      <p>速度：{WPM.toFixed(1)}WPM</p>
-      <p>正確：{correctIndexes.length}字</p>
-      <p>錯誤：{wrongIndexes.length}字</p>
-      <p>分數：{points}</p>
-      <p>
-        正確加分：{correctIndexes.length}*{charPoints.correct}={correctIndexes.length *
-          charPoints.correct}
-      </p>
-      <p>
-        錯誤扣分：{wrongIndexes.length}*{charPoints.wrong}={wrongIndexes.length *
-          charPoints.wrong}
-      </p>
-      <p>
-        準確度加分：{accuracyPoint}
-        {#if accuracyPoint > 0}
-          ({accuracyCutoff}%或以上)
-        {/if}
-      </p>
-      <p>
-        速度加分：{speedPoint}
-        {#if speedPoint > 0}
-          ({speedCutoff}WPM或以上)
-        {/if}
-      </p>
-      <button
-        class="close-btn"
-        on:click={() => setResultsPanelVisibility(false)}>關閉</button
-      >
+      <div class="results-info">
+        <p>準確度：{(accuracy * 100).toFixed(1) + "%"}</p>
+        <p>速度：{WPM.toFixed(1)}WPM</p>
+        <p>正確：{correctIndexes.length}字</p>
+        <p>錯誤：{wrongIndexes.length}字</p>
+        <p>分數：{points}</p>
+        <p>
+          正確加分：{correctIndexes.length * charPoints.correct} ({correctIndexes.length}*{charPoints.correct})
+        </p>
+        <p>
+          錯誤扣分：{wrongIndexes.length * charPoints.wrong} ({wrongIndexes.length}*{charPoints.wrong})
+        </p>
+        <p>
+          準確度加分：{accuracyPoint}
+          {#if accuracyPoint > 0}
+            ({accuracyCutoff}%或以上)
+          {/if}
+        </p>
+        <p>
+          速度加分：{speedPoint}
+          {#if speedPoint > 0}
+            ({speedCutoff}WPM或以上)
+          {/if}
+        </p>
+      </div>
+      <div class="panel-buttons">
+        <button on:click={() => setResultsPanelVisibility(false)}>關閉</button>
+        <button
+          on:click={() => {
+            setResultsPanelVisibility(false);
+            restart();
+          }}>再來一次</button
+        >
+      </div>
     </div>
   </div>
 </div>
@@ -410,16 +415,44 @@
   }
 
   .results-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 100px;
+    height: 60%;
     background-color: rgb(91, 97, 148);
-    width: 40vw;
-    padding: 4em;
+    width: 60%;
+    padding: 4em 3em 1em 3em;
     border-radius: 2rem;
     border: 3px dashed rgb(38, 38, 84);
     box-shadow: 0px 0px 30px black;
     justify-content: center;
   }
 
-  .close-btn {
+  .results-panel p {
+    margin: 0;
+    margin-bottom: 4px;
+  }
+  .results-info {
+    height: 60%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .panel-buttons {
+    display: flex;
+    justify-content: space-around;
+  }
+
+  .panel-buttons button {
+    width: 30%;
+    border: none;
+    border-radius: 3em;
+    padding: 1em 3em;
+  }
+
+  .panel-buttons button:hover {
+    opacity: 70%;
   }
   .background {
     background-color: black;
