@@ -21,11 +21,14 @@
 <h2>Todo List</h2>
 
 <div class="todo-input-grid">
-  <input type="text" bind:value={todoInput} 
-  on:keypress={() => {
-    if (key !== 'Enter') return;
-    add();
-  }}/>
+  <input
+    type="text"
+    bind:value={todoInput}
+    on:keypress={() => {
+      if (key !== "Enter") return;
+      add();
+    }}
+  />
   <input type="date" bind:value={todoDate} />
   <button on:click={add}>Add</button>
 </div>

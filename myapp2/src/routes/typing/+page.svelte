@@ -1,50 +1,71 @@
 <script>
   // @ts-nocheck
 
-  import { onMount } from "svelte";
+  import { moonPoem } from "./passages.json";
+  import { onMount, tick } from "svelte";
   const GameState = Object.freeze({
     START: 0,
     PLAY: 1,
     FINISH: 2,
   });
-  let content = `慶曆四年春，滕子京謫守巴陵郡。越明年，政通人和，百廢具興。
-乃重修岳陽樓，增其舊制，刻唐賢、今人詩賦於其上；屬予作文以記
-之。
-予觀夫巴陵勝狀，在洞庭一湖。銜遠山，吞長江，浩浩湯湯，橫
-無際涯；朝暉夕陰，氣象萬千。此則岳陽樓之大觀也，前人之述備矣。
-然則北通巫峽，南極瀟湘，遷客騷人，多會於此，覽物之情，得無異
-乎？`;
-  // 若夫霪雨霏霏，連月不開；陰風怒號，濁浪排空；日星隱耀，山
-  // 岳潛形；商旅不行，檣傾楫摧；薄暮冥冥，虎嘯猿啼。登斯樓也，則
-  // 有去國懷鄉，憂讒畏譏，滿目蕭然，感極而悲者矣。
-  // 至若春和景明 ，波瀾不驚 ，上下天光，一碧萬頃；沙鷗翔集，錦
-  // 鱗游泳，岸芷汀蘭，郁郁青青。而或長煙一空，皓月千里，浮光躍金，
-  // 靜影沉璧；漁歌互答，此樂何極！登斯樓也，則有心曠神怡，寵辱皆
-  // 忘，把酒臨風，其喜洋洋者矣。
-  // 嗟夫！予嘗求古仁人之心，或異二者之為 。何哉？不以物喜，不
-  // 以己悲。居廟堂之高，則憂其民；處江湖之遠，則憂其君。是進亦憂，
-  // 退亦憂，然則何時 而樂耶？其必曰：「先天下之憂而憂，後天下之樂而
-  // 樂」歟！噫！微斯人，吾誰與歸！
-  // `;
+  const removeContentSpace = true;
+
+  let content = moonPoem;
+
   let currentWordIndex = 0;
-  $: input = inputBox.innerHTML;
+  let input;
+
+  $: correctWords = correctIndexes.length;
   $: wrongWords = wrongIndexes.length;
+  let correctIndexes = [];
   let wrongIndexes = [];
   let startTime = 0;
   let gameState = GameState.START;
   let timeTaken = 0;
   let WPM = 0;
   let accuracy = 0;
-  let textbox;
 
   $: currentWord = content[currentWordIndex];
   let timeElapsed = 0;
   let updateTimerInterval = null;
   let inputBox;
+  let inputDisplay;
+  let typePrep;
+  let focused = false;
+
+  let isCompo = false;
+  const timeLimit = 3;
+  $: showInputDisplay = isCompo && input !== "";
+  const scrollDeadzone = 500;
+  const scrollOffset = 100;
+  const inputBoxOffset = {
+    x: 0,
+    y: 20,
+  };
   onMount(() => {
     content = content.replace(/(?:\r\n|\r|\n)/g, "");
+    if (removeContentSpace) content = content.replace(/\s/g, "");
+    updateInputBoxPos();
     inputBox.focus();
+    document.onkeydown = (e) => {
+      tryPressEnterFocus(e);
+      if (document.activeElement === inputBox) return;
+      if (document.activeElement === typePrep) return;
+      e.preventDefault();
+      inputBox.focus();
+    };
   });
+
+  function tryPressEnterFocus(e) {
+    if (document.activeElement !== typePrep) return;
+    if (e.key !== "Enter") return;
+    inputBox.focus();
+  }
+
+  function clearInput() {
+    inputBox.innerHTML = "";
+    input = "";
+  }
 
   function toHalfWidth(x) {
     if (x === "。") return ".";
@@ -53,7 +74,7 @@
     });
   }
 
-  function startTimer() {
+  function startTimer(e) {
     if (gameState !== GameState.START) return;
     gameState = GameState.PLAY;
     startTime = Date.now();
@@ -66,16 +87,29 @@
       return;
     }
     timeElapsed = Date.now() - startTime;
+
+    const timeElapsedInSec = timeElapsed / 1000;
+    if (timeElapsedInSec > timeLimit) {
+      timeUp();
+    }
   }
 
-  async function compoUpdate(e) {}
+  function timeUp() {
+    finishGame();
+  }
+
+  async function compoUpdate(e) {
+    isCompo = true;
+  }
 
   function finishGame() {
+    clearInterval(updateTimerInterval);
     gameState = GameState.FINISH;
     timeTaken = Date.now() - startTime;
     console.log(wrongWords, content.length);
-    accuracy = 1 - wrongIndexes.length / content.length;
-    WPM = ((content.length * accuracy) / timeTaken) * 60000;
+    const wordsTyped = correctWords + wrongWords;
+    accuracy = 1 - wrongIndexes.length / wordsTyped;
+    WPM = ((wordsTyped * accuracy) / timeTaken) * 60000;
   }
 
   function wordCorrect(word) {
@@ -83,21 +117,12 @@
     return correct;
   }
 
-  function validateInput(word) {
-    input = "";
-    console.log("word");
-
-    for (let i = 0; i < word.length; i++) {
-      currentWord = content[currentWordIndex];
-      const char = word[i];
-      if (!wordCorrect(char))
-        wrongIndexes = [...wrongIndexes, currentWordIndex];
-
-      currentWordIndex++;
-      if (currentWordIndex >= content.length) {
-        finishGame();
-      }
-    }
+  function updateInputBoxPos() {
+    const currentChar = document.querySelector(`#char-${currentWordIndex}`);
+    const rect = currentChar.getBoundingClientRect();
+    inputBox.style.top = rect.top + scrollY + inputBoxOffset.y + "px";
+    inputBox.style.left = rect.left + inputBoxOffset.x + "px";
+    currentChar.appendChild(inputDisplay);
   }
 
   function keyDown(e) {
@@ -107,19 +132,46 @@
   }
 
   function halfInput(e) {
-    // if (e.data === " ") return;
     if (e.inputType === "deleteContentBackward") return;
     if (e.inputType === "insertCompositionText") return;
+    isCompo = false;
     validateInput(e.data);
+    setTimeout(clearInput, 0);
+  }
+
+  function updateScroll() {
+    const currentChar = document.querySelector(`#char-${currentWordIndex}`);
+    const y = currentChar.getBoundingClientRect().top + scrollY;
+    if (Math.abs(scrollY - y) < scrollDeadzone) return;
+    console.log("scroll");
+    scroll({ top: y - scrollOffset, behavior: "smooth" });
+  }
+
+  function validateInput(word) {
+    if (gameState === GameState.FINISH) return;
+    for (let i = 0; i < word.length; i++) {
+      currentWord = content[currentWordIndex];
+      const char = word[i];
+      if (!wordCorrect(char))
+        wrongIndexes = [...wrongIndexes, currentWordIndex];
+      else correctIndexes = [...correctIndexes, currentWordIndex];
+      currentWordIndex++;
+      if (currentWordIndex >= content.length) {
+        finishGame();
+      }
+    }
+    updateScroll();
+    clearInput();
+    updateInputBoxPos();
   }
 
   function tryDelete() {
+    if (gameState === GameState.FINISH) return;
     if (currentWordIndex === 0) return;
     currentWordIndex--;
-    const wrongIndex = wrongIndexes.indexOf(currentWordIndex);
-    if (wrongIndex === -1) return;
-    wrongIndexes.splice(wrongIndex, 1);
-    wrongIndexes = wrongIndexes;
+    updateInputBoxPos();
+    wrongIndexes = wrongIndexes.filter((x) => x !== currentWordIndex);
+    correctIndexes = correctIndexes.filter((x) => x !== currentWordIndex);
   }
 
   async function compoEnd(e) {
@@ -132,8 +184,9 @@
     gameState = GameState.START;
     wrongIndexes = [];
     currentWordIndex = 0;
-    input = "";
-    textbox.focus();
+    // input = "";
+    clearInput();
+    inputBox.focus();
     clearInterval(updateTimerInterval);
     updateTimer(0);
   }
@@ -149,51 +202,55 @@
 </head>
 
 <div class="background">
-  <div class="test-content">
-    {#each content as char, index (index)}
-      {#if index === currentWordIndex}
-        <div class="current-char">
-          <p>{char}</p>
-          <p
-            contenteditable
-            type="text"
-            class="current-char-input"
-            placeholder={gameState === GameState.PLAY ? "" : "在這裡開始打字"}
-            on:compositionupdate={compoUpdate}
-            on:compositionend={compoEnd}
-            on:input={startTimer}
-            on:input={halfInput}
-            on:keydown={keyDown}
-            bind:this={inputBox}
-          ></p>
-        </div>
-      {:else if wrongIndexes.includes(index)}
-        <p class="wrong">{char}</p>
-      {:else}
-        <p>{char}</p>
-      {/if}
-    {/each}
-  </div>
-  <!-- <input
-    class="type-input"
+  {#if gameState !== GameState.PLAY}
+    <input
+      class="type-prep"
+      type="text"
+      placeholder="這裡可以調整輸入法，準備開始打字(按Enter 進入測試)"
+      bind:this={typePrep}
+    />
+  {/if}
+  <input
+    type="text"
+    id="type-input"
     placeholder={gameState === GameState.PLAY ? "" : "在這裡開始打字"}
     on:compositionupdate={compoUpdate}
     on:compositionend={compoEnd}
     on:input={startTimer}
     on:input={halfInput}
     on:keydown={keyDown}
+    on:focus={() => (focused = true)}
+    on:focusout={() => (focused = false)}
     bind:value={input}
-    bind:this={textbox}
-    type="text"
-  /> -->
+    bind:this={inputBox}
+  />
+  <div
+    id="input-display"
+    class={showInputDisplay ? "" : "hidden"}
+    bind:this={inputDisplay}
+  >
+    {showInputDisplay ? input : ""}
+  </div>
+  <div class="test-content">
+    {#each content as char, index (index)}
+      <div class="char" id="char-{index}">
+        {#if index === currentWordIndex}
+          <div class={focused ? "" : "inactive"}>
+            <div class="current-char">
+              <p>{char}</p>
+            </div>
+          </div>
+        {:else if wrongIndexes.includes(index)}
+          <p class="wrong">{char}</p>
+        {:else if correctIndexes.includes(index)}
+          <p class="correct">{char}</p>
+        {:else}
+          <p>{char}</p>
+        {/if}
+      </div>
+    {/each}
+  </div>
 
-  {#if gameState !== GameState.PLAY}
-    <input
-      class="type-prep"
-      type="text"
-      placeholder="這裡可以調整輸入法，準備開始打字"
-    />
-  {/if}
   <p>{wrongWords}</p>
   {#if gameState !== GameState.START}
     <button class="restart-btn" on:click={restart}>重新開始</button>
@@ -218,14 +275,13 @@
 
   .test-content {
     padding: 3% 2%;
-    position: relative;
   }
 
   .test-content p {
     display: inline-block;
     font-family: "Noto Serif TC";
     font-size: 2rem;
-    margin: 2px;
+    margin: 5px;
     width: 2.5rem;
     height: 2.5rem;
     border: 1px solid rgba(255, 255, 255, 0.416);
@@ -233,22 +289,55 @@
     vertical-align: middle;
   }
 
+  .char {
+    display: inline-block;
+    position: relative;
+  }
+
   .wrong {
     color: red;
   }
 
-  .current-char-input {
-    position: absolute;
-    bottom: -2rem;
-    left: 0;
-    background-color: black;
-    border: none;
-    color: white;
-    justify-content: center;
-    min-width: none;
-    width: 1rem;
+  .correct {
+    color: rgb(101, 196, 101);
   }
 
+  #type-input {
+    position: absolute;
+    color: white;
+    left: 0;
+    font-size: 1rem;
+    height: 2rem;
+    background-color: transparent;
+    border: none;
+    overflow: hidden;
+    width: 0.1px;
+  }
+
+  #type-input:focus {
+    border: none;
+    outline: 0;
+    caret-color: rgba(0, 0, 0, 0);
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  #input-display {
+    z-index: 3;
+    white-space: nowrap;
+    color: white;
+    position: absolute;
+    background-color: rgb(85, 85, 85);
+    text-align: left;
+    padding: 0.2rem 0.2rem;
+    opacity: 100%;
+  }
+
+  #input-display:blank {
+    display: none;
+  }
   .current-char {
     display: inline-block;
     position: relative;
@@ -257,6 +346,11 @@
   .current-char p {
     color: skyblue;
     border: 1px solid skyblue;
+  }
+
+  .inactive p {
+    border-color: grey;
+    color: grey;
   }
 
   p {
