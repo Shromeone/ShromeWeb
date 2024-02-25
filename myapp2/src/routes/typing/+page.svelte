@@ -1,8 +1,9 @@
 <script>
   // @ts-nocheck
 
-  import { moonPoem } from "./passages.json";
+  import { nintendoWiki } from "./passages.json";
   import { onMount, tick } from "svelte";
+  import { charPoints, bonus } from "./bonus-points.json";
   const GameState = Object.freeze({
     START: 0,
     PLAY: 1,
@@ -10,7 +11,7 @@
   });
   const removeContentSpace = true;
 
-  let content = moonPoem;
+  let content = nintendoWiki;
 
   let currentWordIndex = 0;
   let input;
@@ -28,13 +29,24 @@
   $: currentWord = content[currentWordIndex];
   let timeElapsed = 0;
   let updateTimerInterval = null;
+  let updateInfoInterval = null;
+
   let inputBox;
   let inputDisplay;
   let typePrep;
+  let resultsScreen;
+
   let focused = false;
 
   let isCompo = false;
-  const timeLimit = 3;
+  const timeLimit = 60;
+  let points;
+  let accuracyPoint;
+  let speedPoint;
+  let accuracyCutoff;
+  let speedCutoff;
+
+  let isTimeUp = false;
   $: showInputDisplay = isCompo && input !== "";
   const scrollDeadzone = 500;
   const scrollOffset = 100;
@@ -76,8 +88,11 @@
 
   function startTimer(e) {
     if (gameState !== GameState.START) return;
+    isTimeUp = false;
+    timeTaken = 0;
     gameState = GameState.PLAY;
     startTime = Date.now();
+    updateInfoInterval = setInterval(updateInfo, 2000);
     updateTimerInterval = setInterval(updateTimer, 100);
   }
 
@@ -95,6 +110,7 @@
   }
 
   function timeUp() {
+    isTimeUp = true;
     finishGame();
   }
 
@@ -104,11 +120,20 @@
 
   function finishGame() {
     clearInterval(updateTimerInterval);
+    clearInterval(updateInfoInterval);
     gameState = GameState.FINISH;
-    timeTaken = Date.now() - startTime;
     console.log(wrongWords, content.length);
-    const wordsTyped = correctWords + wrongWords;
-    accuracy = 1 - wrongIndexes.length / wordsTyped;
+    updateInfo();
+    calcFinalPoints();
+    setResultsPanelVisibility(true);
+  }
+
+  function updateInfo() {
+    timeTaken = isTimeUp ? timeLimit * 1000 : Date.now() - startTime;
+    const wrongs = wrongIndexes.length;
+    const corrects = correctIndexes.length;
+    const wordsTyped = corrects + wrongs;
+    accuracy = 1 - wrongs / wordsTyped;
     WPM = ((wordsTyped * accuracy) / timeTaken) * 60000;
   }
 
@@ -152,9 +177,11 @@
     for (let i = 0; i < word.length; i++) {
       currentWord = content[currentWordIndex];
       const char = word[i];
-      if (!wordCorrect(char))
+      if (!wordCorrect(char)) {
         wrongIndexes = [...wrongIndexes, currentWordIndex];
-      else correctIndexes = [...correctIndexes, currentWordIndex];
+      } else {
+        correctIndexes = [...correctIndexes, currentWordIndex];
+      }
       currentWordIndex++;
       if (currentWordIndex >= content.length) {
         finishGame();
@@ -163,6 +190,56 @@
     updateScroll();
     clearInput();
     updateInputBoxPos();
+
+    if (gameState !== GameState.FINISH) calcTempPoints();
+  }
+
+  function calcTempPoints() {
+    points =
+      correctIndexes.length * charPoints.correct +
+      wrongIndexes.length * charPoints.wrong;
+  }
+
+  function calcFinalPoints() {
+    accuracyPoint = getAccuracyPoint();
+    speedPoint = getSpeedPoint();
+
+    points =
+      correctIndexes.length * charPoints.correct +
+      wrongIndexes.length * charPoints.wrong +
+      accuracyPoint +
+      speedPoint;
+
+    console.log(`points: ${points}`);
+  }
+
+  function getSpeedPoint() {
+    const speedPoints = Object.keys(bonus.speed);
+    speedPoints.sort((a, b) => Number(b) - Number(a));
+    for (let speed of speedPoints) {
+      console.log(WPM, Number(speed));
+      if (WPM >= Number(speed)) {
+        console.log(`speed: ${bonus.speed[speed]}`);
+        speedCutoff = speed;
+        return bonus.speed[speed];
+      }
+    }
+    return 0;
+  }
+
+  function getAccuracyPoint() {
+    const accuracyPoints = Object.keys(bonus.accuracy);
+    accuracyPoints.sort((a, b) => Number(b) - Number(a));
+    for (let accu of accuracyPoints) {
+      console.log(accuracy * 100, Number(accu));
+      if (accuracy * 100 >= Number(accu)) {
+        console.log(`accu: ${bonus.accuracy[accu]}`);
+        accuracyCutoff = accu;
+        return bonus.accuracy[accu];
+      }
+    }
+
+    return 0;
   }
 
   function tryDelete() {
@@ -182,13 +259,26 @@
 
   function restart() {
     gameState = GameState.START;
+    timeTaken = 0;
     wrongIndexes = [];
+    correctIndexes = [];
     currentWordIndex = 0;
     // input = "";
     clearInput();
     inputBox.focus();
     clearInterval(updateTimerInterval);
+    clearInterval(updateInfoInterval);
     updateTimer(0);
+    updateInputBoxPos();
+    updateScroll();
+  }
+
+  function setResultsPanelVisibility(show = false) {
+    if (show) {
+      resultsScreen.classList.remove("hidden");
+    } else {
+      resultsScreen.classList.add("hidden");
+    }
   }
 </script>
 
@@ -210,6 +300,17 @@
       bind:this={typePrep}
     />
   {/if}
+  <div class="info-bar">
+    {#if gameState !== 3}
+      <p>剩餘時間: {Math.ceil(timeLimit - timeElapsed / 1000)}秒</p>
+      <p>時間: {(timeTaken / 1000).toFixed(2) + "s"}</p>
+      <p>速度: {WPM.toFixed(1)}WPM</p>
+      <p>準確度: {(accuracy * 100).toFixed(1) + "%"}</p>
+      <p>正確: {correctWords}字</p>
+      <p>錯誤: {wrongWords}字</p>
+      <p>分數: {points}</p>
+    {/if}
+  </div>
   <input
     type="text"
     id="type-input"
@@ -251,26 +352,116 @@
     {/each}
   </div>
 
-  <p>{wrongWords}</p>
   {#if gameState !== GameState.START}
     <button class="restart-btn" on:click={restart}>重新開始</button>
   {/if}
   {#if gameState === GameState.PLAY}
     <p>{Math.floor(timeElapsed / 1000)}</p>
   {/if}
-  {#if gameState === GameState.FINISH}
-    <p>Time taken: {(timeTaken / 1000).toFixed(2) + "s"}</p>
-    <p>WPM: {WPM.toFixed(1)}</p>
-    <p>Accuracy: {(accuracy * 100).toFixed(1) + "%"}</p>
-  {/if}
 
-  <p contenteditable="true">Hi</p>
+  <div class="results-screen" bind:this={resultsScreen}>
+    <div class="results-panel">
+      <div class="results-info">
+        <p>準確度：{(accuracy * 100).toFixed(1) + "%"}</p>
+        <p>速度：{WPM.toFixed(1)}WPM</p>
+        <p>正確：{correctIndexes.length}字</p>
+        <p>錯誤：{wrongIndexes.length}字</p>
+        <p>分數：{points}</p>
+        <p>
+          正確加分：{correctIndexes.length * charPoints.correct} ({correctIndexes.length}*{charPoints.correct})
+        </p>
+        <p>
+          錯誤扣分：{wrongIndexes.length * charPoints.wrong} ({wrongIndexes.length}*{charPoints.wrong})
+        </p>
+        <p>
+          準確度加分：{accuracyPoint}
+          {#if accuracyPoint > 0}
+            ({accuracyCutoff}%或以上)
+          {/if}
+        </p>
+        <p>
+          速度加分：{speedPoint}
+          {#if speedPoint > 0}
+            ({speedCutoff}WPM或以上)
+          {/if}
+        </p>
+      </div>
+      <div class="panel-buttons">
+        <button on:click={() => setResultsPanelVisibility(false)}>關閉</button>
+        <button
+          on:click={() => {
+            setResultsPanelVisibility(false);
+            restart();
+          }}>再來一次</button
+        >
+      </div>
+    </div>
+  </div>
 </div>
 
 <style>
+  .results-screen {
+    opacity: 100%;
+    position: fixed;
+    display: flex;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.258);
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+  }
+
+  .results-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 100px;
+    height: 60%;
+    background-color: rgb(91, 97, 148);
+    width: 60%;
+    padding: 4em 3em 1em 3em;
+    border-radius: 2rem;
+    border: 3px dashed rgb(38, 38, 84);
+    box-shadow: 0px 0px 30px black;
+    justify-content: center;
+  }
+
+  .results-panel p {
+    margin: 0;
+    margin-bottom: 4px;
+  }
+  .results-info {
+    height: 60%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .panel-buttons {
+    display: flex;
+    justify-content: space-around;
+  }
+
+  .panel-buttons button {
+    width: 30%;
+    border: none;
+    border-radius: 3em;
+    padding: 1em 3em;
+  }
+
+  .panel-buttons button:hover {
+    opacity: 70%;
+  }
   .background {
     background-color: black;
     min-height: 100vh;
+  }
+
+  .info-bar {
+    display: flex;
+    gap: 20px;
   }
 
   .test-content {
@@ -321,7 +512,8 @@
   }
 
   .hidden {
-    display: none;
+    visibility: hidden;
+    opacity: 0%;
   }
 
   #input-display {
@@ -355,15 +547,6 @@
 
   p {
     color: white;
-  }
-  .current-word {
-    color: lightblue;
-  }
-
-  .type-input {
-    font-size: 3rem;
-    display: block;
-    margin-bottom: 3rem;
   }
 
   .type-prep {
