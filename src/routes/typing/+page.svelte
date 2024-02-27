@@ -1,7 +1,7 @@
 <script>
   // @ts-nocheck
 
-  import { nintendoWiki } from "./passages.json";
+  import { moonPoem } from "./passages.json";
   import { onMount, tick } from "svelte";
   import { charPoints, bonus } from "./bonus-points.json";
   const GameState = Object.freeze({
@@ -11,7 +11,7 @@
   });
   const removeContentSpace = true;
 
-  let content = nintendoWiki;
+  let content = moonPoem;
 
   let currentWordIndex = 0;
   let input;
@@ -22,7 +22,7 @@
   let wrongIndexes = [];
   let startTime = 0;
   let gameState = GameState.START;
-  let timeTaken = 0;
+  let timeTakenInMs = 0;
   let WPM = 0;
   let accuracy = 0;
 
@@ -43,8 +43,10 @@
   let points;
   let accuracyPoint;
   let speedPoint;
+  let timePoint;
   let accuracyCutoff;
   let speedCutoff;
+  let timeLeft;
 
   let isTimeUp = false;
   $: showInputDisplay = isCompo && input !== "";
@@ -89,7 +91,7 @@
   function startTimer(e) {
     if (gameState !== GameState.START) return;
     isTimeUp = false;
-    timeTaken = 0;
+    timeTakenInMs = 0;
     gameState = GameState.PLAY;
     startTime = Date.now();
     updateInfoInterval = setInterval(updateInfo, 2000);
@@ -129,12 +131,12 @@
   }
 
   function updateInfo() {
-    timeTaken = isTimeUp ? timeLimit * 1000 : Date.now() - startTime;
+    timeTakenInMs = isTimeUp ? timeLimit * 1000 : Date.now() - startTime;
     const wrongs = wrongIndexes.length;
     const corrects = correctIndexes.length;
     const wordsTyped = corrects + wrongs;
     accuracy = 1 - wrongs / wordsTyped;
-    WPM = ((wordsTyped * accuracy) / timeTaken) * 60000;
+    WPM = ((wordsTyped * accuracy) / timeTakenInMs) * 60000;
   }
 
   function wordCorrect(word) {
@@ -203,14 +205,20 @@
   function calcFinalPoints() {
     accuracyPoint = getAccuracyPoint();
     speedPoint = getSpeedPoint();
-
+    timePoint = getTimePoint();
     points =
       correctIndexes.length * charPoints.correct +
       wrongIndexes.length * charPoints.wrong +
       accuracyPoint +
-      speedPoint;
+      speedPoint +
+      timePoint;
 
     console.log(`points: ${points}`);
+  }
+
+  function getTimePoint() {
+    timeLeft = (timeLimit * 1000 - timeTakenInMs) / 1000;
+    return Math.round(timeLeft * bonus.timeLeft);
   }
 
   function getSpeedPoint() {
@@ -259,7 +267,7 @@
 
   function restart() {
     gameState = GameState.START;
-    timeTaken = 0;
+    timeTakenInMs = 0;
     wrongIndexes = [];
     correctIndexes = [];
     currentWordIndex = 0;
@@ -303,7 +311,7 @@
   <div class="info-bar">
     {#if gameState !== 3}
       <p>剩餘時間: {Math.ceil(timeLimit - timeElapsed / 1000)}秒</p>
-      <p>時間: {(timeTaken / 1000).toFixed(2) + "s"}</p>
+      <p>時間: {(timeTakenInMs / 1000).toFixed(2) + "s"}</p>
       <p>速度: {WPM.toFixed(1)}WPM</p>
       <p>準確度: {(accuracy * 100).toFixed(1) + "%"}</p>
       <p>正確: {correctWords}字</p>
@@ -368,10 +376,10 @@
         <p>錯誤：{wrongIndexes.length}字</p>
         <p>分數：{points}</p>
         <p>
-          正確加分：{correctIndexes.length * charPoints.correct} ({correctIndexes.length}*{charPoints.correct})
+          正確加分：{correctIndexes.length * charPoints.correct} ({correctIndexes.length}字*{charPoints.correct}分/字)
         </p>
         <p>
-          錯誤扣分：{wrongIndexes.length * charPoints.wrong} ({wrongIndexes.length}*{charPoints.wrong})
+          錯誤扣分：{wrongIndexes.length * charPoints.wrong} ({wrongIndexes.length}字*{charPoints.wrong}分/字)
         </p>
         <p>
           準確度加分：{accuracyPoint}
@@ -383,6 +391,12 @@
           速度加分：{speedPoint}
           {#if speedPoint > 0}
             ({speedCutoff}WPM或以上)
+          {/if}
+        </p>
+        <p>
+          時間加分：{timePoint}
+          {#if timePoint > 0}
+            ({timeLeft}秒 * {bonus.timeLeft})
           {/if}
         </p>
       </div>
