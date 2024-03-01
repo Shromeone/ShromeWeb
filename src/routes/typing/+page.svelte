@@ -283,6 +283,7 @@
   }
 
   function tryDelete() {
+    console.log("del");
     if (gameState === GameState.FINISH) return;
     if (currentWordIndex === 0) return;
     currentWordIndex--;
