@@ -1,9 +1,10 @@
 <script>
   // @ts-nocheck
 
-  import { englishTest } from "./passages.json";
+  import { passages } from "./passages.json";
   import { onMount, tick } from "svelte";
   import { charPoints, bonus } from "./bonus-points.json";
+  import "./passages.json";
   const GameState = Object.freeze({
     START: 0,
     PLAY: 1,
@@ -11,7 +12,7 @@
   });
   const removeContentSpace = true;
 
-  let content = englishTest;
+  let content = passages[0].content;
 
   let currentWordIndex = 0;
   let input;
@@ -22,7 +23,7 @@
   let wrongIndexes = [];
   let startTime = 0;
   let gameState = GameState.START;
-  let timeTaken = 0;
+  let timeTakenInMs = 0;
   let WPM = 0;
   let accuracy = 0;
 
@@ -30,14 +31,29 @@
   let timeElapsed = 0;
   let updateTimerInterval = null;
   let updateInfoInterval = null;
+
   let inputBox;
   let inputDisplay;
   let typePrep;
+  let resultsScreen;
+
   let focused = false;
 
   let isCompo = false;
-  const timeLimit = 1;
-  let points;
+  let timeLimit = 60;
+
+  let points = 0;
+  let basePoints = 0;
+  let accuracyPoint = 0;
+  let speedPoint = 0;
+  let timePoint = 0;
+  let accuracyCutoff = 0;
+  let accuracyMultiplier = 0;
+  let speedCutoff = 0;
+  let speedMultiplier = 0;
+  let timeLeft = 0;
+
+  let isTimeUp = false;
   $: showInputDisplay = isCompo && input !== "";
   const scrollDeadzone = 500;
   const scrollOffset = 100;
@@ -46,6 +62,7 @@
     y: 20,
   };
   onMount(() => {
+    setResultsPanelVisibility(false);
     content = content.replace(/(?:\r\n|\r|\n)/g, "");
     if (removeContentSpace) content = content.replace(/\s/g, "");
     updateInputBoxPos();
@@ -79,7 +96,8 @@
 
   function startTimer(e) {
     if (gameState !== GameState.START) return;
-    timeTaken = 0;
+    isTimeUp = false;
+    timeTakenInMs = 0;
     gameState = GameState.PLAY;
     startTime = Date.now();
     updateInfoInterval = setInterval(updateInfo, 2000);
@@ -100,6 +118,7 @@
   }
 
   function timeUp() {
+    isTimeUp = true;
     finishGame();
   }
 
@@ -114,15 +133,16 @@
     console.log(wrongWords, content.length);
     updateInfo();
     calcFinalPoints();
+    setResultsPanelVisibility(true);
   }
 
   function updateInfo() {
-    timeTaken = Date.now() - startTime;
+    timeTakenInMs = isTimeUp ? timeLimit * 1000 : Date.now() - startTime;
     const wrongs = wrongIndexes.length;
     const corrects = correctIndexes.length;
     const wordsTyped = corrects + wrongs;
     accuracy = 1 - wrongs / wordsTyped;
-    WPM = ((wordsTyped * accuracy) / timeTaken) * 60000;
+    WPM = ((wordsTyped * accuracy) / timeTakenInMs) * 60000;
   }
 
   function wordCorrect(word) {
@@ -175,10 +195,11 @@
         finishGame();
       }
     }
-    calcTempPoints();
     updateScroll();
     clearInput();
     updateInputBoxPos();
+
+    if (gameState !== GameState.FINISH) calcTempPoints();
   }
 
   function calcTempPoints() {
@@ -188,14 +209,20 @@
   }
 
   function calcFinalPoints() {
-    const accuracyPoint = getAccuracyPoint();
-    const speedPoint = getSpeedPoint();
-
-    points =
+    basePoints =
       correctIndexes.length * charPoints.correct +
-      wrongIndexes.length * charPoints.wrong +
-      accuracyPoint +
-      speedPoint;
+      wrongIndexes.length * charPoints.wrong;
+    accuracyPoint = getAccuracyPoint();
+    speedPoint = getSpeedPoint();
+    timePoint = getTimePoint();
+    points = basePoints + accuracyPoint + speedPoint + timePoint;
+
+    console.log(`points: ${points}`);
+  }
+
+  function getTimePoint() {
+    timeLeft = (timeLimit * 1000 - timeTakenInMs) / 1000;
+    return Math.round(timeLeft * bonus.timeLeft);
   }
 
   function getSpeedPoint() {
@@ -205,7 +232,9 @@
       console.log(WPM, Number(speed));
       if (WPM >= Number(speed)) {
         console.log(`speed: ${bonus.speed[speed]}`);
-        return bonus.speed[speed];
+        speedCutoff = speed;
+        speedMultiplier = bonus.speed[speed];
+        return Math.round(basePoints * speedMultiplier);
       }
     }
     return 0;
@@ -218,7 +247,9 @@
       console.log(accuracy * 100, Number(accu));
       if (accuracy * 100 >= Number(accu)) {
         console.log(`accu: ${bonus.accuracy[accu]}`);
-        return bonus.accuracy[accu];
+        accuracyCutoff = accu;
+        accuracyMultiplier = bonus.accuracy[accu];
+        return Math.round(basePoints * accuracyMultiplier);
       }
     }
 
@@ -242,7 +273,7 @@
 
   function restart() {
     gameState = GameState.START;
-    timeTaken = 0;
+    timeTakenInMs = 0;
     wrongIndexes = [];
     correctIndexes = [];
     currentWordIndex = 0;
@@ -255,6 +286,14 @@
     updateInputBoxPos();
     updateScroll();
   }
+
+  function setResultsPanelVisibility(show = false) {
+    if (show) {
+      resultsScreen.classList.remove("hidden");
+    } else {
+      resultsScreen.classList.add("hidden");
+    }
+  }
 </script>
 
 <head>
@@ -266,79 +305,195 @@
   />
 </head>
 
-<div class="background">
-  {#if gameState !== GameState.PLAY}
-    <input
-      class="type-prep"
-      type="text"
-      placeholder="這裡可以調整輸入法，準備開始打字(按Enter 進入測試)"
-      bind:this={typePrep}
-    />
-  {/if}
-  <div class="info-bar">
-    {#if gameState !== 3}
-      <p>Time Left: {Math.ceil(timeLimit - timeElapsed / 1000)}</p>
-      <p>Time taken: {(timeTaken / 1000).toFixed(2) + "s"}</p>
-      <p>WPM: {WPM.toFixed(1)}</p>
-      <p>Accuracy: {(accuracy * 100).toFixed(1) + "%"}</p>
-      <p>Correct: {correctWords}</p>
-      <p>Wrong: {wrongWords}</p>
-      <p>Points : {points}</p>
+<body>
+  <div class="background">
+    {#if gameState !== GameState.PLAY}
+      <select bind:value={content} id="passage" placeholder="選擇文章">
+        {#each passages as passage}
+          <option value={passage.content}>{passage.title}</option>
+        {/each}
+      </select>
+      <input
+        class="type-prep"
+        type="text"
+        placeholder="這裡可以調整輸入法，準備開始打字(按Enter 進入測試)"
+        bind:this={typePrep}
+      />
     {/if}
-  </div>
-  <input
-    type="text"
-    id="type-input"
-    placeholder={gameState === GameState.PLAY ? "" : "在這裡開始打字"}
-    on:compositionupdate={compoUpdate}
-    on:compositionend={compoEnd}
-    on:input={startTimer}
-    on:input={halfInput}
-    on:keydown={keyDown}
-    on:focus={() => (focused = true)}
-    on:focusout={() => (focused = false)}
-    bind:value={input}
-    bind:this={inputBox}
-  />
-  <div
-    id="input-display"
-    class={showInputDisplay ? "" : "hidden"}
-    bind:this={inputDisplay}
-  >
-    {showInputDisplay ? input : ""}
-  </div>
-  <div class="test-content">
-    {#each content as char, index (index)}
-      <div class="char" id="char-{index}">
-        {#if index === currentWordIndex}
-          <div class={focused ? "" : "inactive"}>
-            <div class="current-char">
-              <p>{char}</p>
+    <div class="info-bar">
+      {#if gameState !== 3}
+        <p>剩餘時間: {Math.ceil(timeLimit - timeElapsed / 1000)}秒</p>
+        <p>時間: {(timeTakenInMs / 1000).toFixed(2) + "s"}</p>
+        <p>速度: {WPM.toFixed(1)}WPM</p>
+        <p>準確度: {(accuracy * 100).toFixed(1) + "%"}</p>
+        <p>正確: {correctWords}字</p>
+        <p>錯誤: {wrongWords}字</p>
+        <p>分數: {points}</p>
+      {/if}
+    </div>
+    <input
+      type="text"
+      id="type-input"
+      placeholder={gameState === GameState.PLAY ? "" : "在這裡開始打字"}
+      on:compositionupdate={compoUpdate}
+      on:compositionend={compoEnd}
+      on:input={startTimer}
+      on:input={halfInput}
+      on:keydown={keyDown}
+      on:focus={() => (focused = true)}
+      on:focusout={() => (focused = false)}
+      bind:value={input}
+      bind:this={inputBox}
+    />
+    <div
+      id="input-display"
+      class={showInputDisplay ? "" : "hidden"}
+      bind:this={inputDisplay}
+    >
+      {showInputDisplay ? input : ""}
+    </div>
+    <div class="test-content">
+      {#each content as char, index (index)}
+        <div class="char" id="char-{index}">
+          {#if index === currentWordIndex}
+            <div class={focused ? "" : "inactive"}>
+              <div class="current-char">
+                <p>{char}</p>
+              </div>
             </div>
-          </div>
-        {:else if wrongIndexes.includes(index)}
-          <p class="wrong">{char}</p>
-        {:else if correctIndexes.includes(index)}
-          <p class="correct">{char}</p>
-        {:else}
-          <p>{char}</p>
-        {/if}
-      </div>
-    {/each}
-  </div>
+          {:else if wrongIndexes.includes(index)}
+            <p class="wrong">{char}</p>
+          {:else if correctIndexes.includes(index)}
+            <p class="correct">{char}</p>
+          {:else}
+            <p>{char}</p>
+          {/if}
+        </div>
+      {/each}
+    </div>
 
-  {#if gameState !== GameState.START}
-    <button class="restart-btn" on:click={restart}>重新開始</button>
-  {/if}
-  {#if gameState === GameState.PLAY}
-    <p>{Math.floor(timeElapsed / 1000)}</p>
-  {/if}
-</div>
+    {#if gameState !== GameState.START}
+      <button class="restart-btn" on:click={restart}>重新開始</button>
+    {/if}
+    {#if gameState === GameState.FINISH}
+      <button on:click={() => setResultsPanelVisibility(true)}>查看成績</button>
+    {/if}
+
+    <div class="results-screen" bind:this={resultsScreen}>
+      <div class="results-panel">
+        <div class="results-info">
+          <p>準確度：{(accuracy * 100).toFixed(1) + "%"}</p>
+          <p>速度：{WPM.toFixed(1)}WPM</p>
+          <p>正確：{correctIndexes.length}字</p>
+          <p>錯誤：{wrongIndexes.length}字</p>
+          <p>底分：{basePoints}</p>
+
+          <p>總分：{points}</p>
+          <p>
+            正確加分：{correctIndexes.length * charPoints.correct} ({correctIndexes.length}字*{charPoints.correct}分/字)
+          </p>
+          <p>
+            錯誤扣分：{wrongIndexes.length * charPoints.wrong} ({wrongIndexes.length}字*{charPoints.wrong}分/字)
+          </p>
+          <p>
+            準確度加分：{accuracyPoint}
+            {#if accuracyPoint > 0}
+              ({basePoints} * {Math.round(accuracyMultiplier * 100) + "%"}) ({accuracyCutoff}%或以上)
+            {/if}
+          </p>
+          <p>
+            速度加分：{speedPoint}
+            {#if speedPoint > 0}
+              ({basePoints} * {Math.round(speedMultiplier * 100) + "%"}) ({speedCutoff}WPM或以上)
+            {/if}
+          </p>
+          <p>
+            時間加分：{timePoint}
+            {#if timePoint > 0}
+              ({timeLeft}秒 * {bonus.timeLeft})
+            {/if}
+          </p>
+        </div>
+        <div class="panel-buttons">
+          <button on:click={() => setResultsPanelVisibility(false)}>關閉</button
+          >
+          <button
+            on:click={() => {
+              setResultsPanelVisibility(false);
+              restart();
+            }}>再來一次</button
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
 
 <style>
+  .results-screen {
+    opacity: 100%;
+    position: fixed;
+    display: flex;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.258);
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+  }
+
+  .results-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 100px;
+    height: 60%;
+    background-color: rgb(91, 97, 148);
+    width: 60%;
+    padding: 4em 3em 1em 3em;
+    border-radius: 2rem;
+    border: 3px dashed rgb(38, 38, 84);
+    box-shadow: 0px 0px 30px black;
+    justify-content: center;
+  }
+
+  .results-panel p {
+    margin: 0;
+    margin-bottom: 4px;
+  }
+  .results-info {
+    height: 60%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .panel-buttons {
+    display: flex;
+    justify-content: space-around;
+  }
+
+  .panel-buttons button {
+    width: 30%;
+    border: none;
+    border-radius: 3em;
+    padding: 1em 3em;
+  }
+
+  .panel-buttons button:hover {
+    opacity: 70%;
+  }
+  body {
+    padding: 0;
+    margin: 0;
+    background-color: black;
+  }
+
   .background {
     background-color: black;
     min-height: 100vh;
+    width: 100%;
   }
 
   .info-bar {
@@ -394,7 +549,8 @@
   }
 
   .hidden {
-    display: none;
+    visibility: hidden;
+    opacity: 0%;
   }
 
   #input-display {
