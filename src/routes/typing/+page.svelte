@@ -1,9 +1,11 @@
 <script>
   // @ts-nocheck
 
+  import { timeToChinese } from "$lib/utils/time-converter.js";
   import { passages } from "./passages.json";
   import { onMount, tick } from "svelte";
   import { charPoints, bonus } from "./bonus-points.json";
+  import { timeLimits } from "./time-limits.json";
   import "./passages.json";
   const GameState = Object.freeze({
     START: 0,
@@ -36,11 +38,12 @@
   let inputDisplay;
   let typePrep;
   let resultsScreen;
+  let settingsScreen;
 
   let focused = false;
 
   let isCompo = false;
-  let timeLimit = 60;
+  let timeLimit = 5;
 
   let points = 0;
   let basePoints = 0;
@@ -63,6 +66,7 @@
   };
   onMount(() => {
     setResultsPanelVisibility(false);
+    // setSettingsVisibility(false);
     content = content.replace(/(?:\r\n|\r|\n)/g, "");
     if (removeContentSpace) content = content.replace(/\s/g, "");
     updateInputBoxPos();
@@ -112,6 +116,8 @@
     timeElapsed = Date.now() - startTime;
 
     const timeElapsedInSec = timeElapsed / 1000;
+    if (timeLimit <= 0) return;
+    console.log(timeLimit);
     if (timeElapsedInSec > timeLimit) {
       timeUp();
     }
@@ -221,6 +227,7 @@
   }
 
   function getTimePoint() {
+    if (timeLimit <= 0) return 0;
     timeLeft = (timeLimit * 1000 - timeTakenInMs) / 1000;
     return Math.round(timeLeft * bonus.timeLeft);
   }
@@ -288,10 +295,20 @@
   }
 
   function setResultsPanelVisibility(show = false) {
+    console.log(resultsScreen);
     if (show) {
       resultsScreen.classList.remove("hidden");
     } else {
       resultsScreen.classList.add("hidden");
+    }
+  }
+
+  function setSettingsVisibility(show = false) {
+    console.log(show);
+    if (show) {
+      settingsScreen.classList.remove("hidden");
+    } else {
+      settingsScreen.classList.add("hidden");
     }
   }
 </script>
@@ -308,21 +325,19 @@
 <body>
   <div class="background">
     {#if gameState !== GameState.PLAY}
-      <select bind:value={content} id="passage" placeholder="選擇文章">
-        {#each passages as passage}
-          <option value={passage.content}>{passage.title}</option>
-        {/each}
-      </select>
       <input
         class="type-prep"
         type="text"
         placeholder="這裡可以調整輸入法，準備開始打字(按Enter 進入測試)"
         bind:this={typePrep}
       />
+      <button on:click={() => setSettingsVisibility(true)}>設定</button>
     {/if}
     <div class="info-bar">
       {#if gameState !== 3}
-        <p>剩餘時間: {Math.ceil(timeLimit - timeElapsed / 1000)}秒</p>
+        {#if timeLimit > 0}
+          <p>剩餘時間: {Math.ceil(timeLimit - timeElapsed / 1000)}秒</p>
+        {/if}
         <p>時間: {(timeTakenInMs / 1000).toFixed(2) + "s"}</p>
         <p>速度: {WPM.toFixed(1)}WPM</p>
         <p>準確度: {(accuracy * 100).toFixed(1) + "%"}</p>
@@ -379,9 +394,34 @@
       <button on:click={() => setResultsPanelVisibility(true)}>查看成績</button>
     {/if}
 
+    <div class="settings-screen" bind:this={settingsScreen}>
+      <div class="settings-panel">
+        <h2>設定</h2>
+        <div class="passage-select">
+          <p>文章</p>
+          <select bind:value={content} id="passage" placeholder="選擇文章">
+            {#each passages as passage}
+              <option value={passage.content}>{passage.title}</option>
+            {/each}
+          </select>
+        </div>
+        <div class="time-select">
+          <p>時間限制</p>
+          <select bind:value={timeLimit} id="time" placeholder="">
+            <option value={0}>無時限</option>
+            {#each timeLimits as limit}
+              <option value={limit}>{timeToChinese(limit)}</option>
+            {/each}
+          </select>
+        </div>
+        <button on:click={() => setSettingsVisibility(false)}>關閉</button>
+      </div>
+    </div>
+
     <div class="results-screen" bind:this={resultsScreen}>
       <div class="results-panel">
         <div class="results-info">
+          <h2>成績</h2>
           <p>準確度：{(accuracy * 100).toFixed(1) + "%"}</p>
           <p>速度：{WPM.toFixed(1)}WPM</p>
           <p>正確：{correctIndexes.length}字</p>
@@ -430,7 +470,20 @@
 </body>
 
 <style>
-  .results-screen {
+  .passage-select,
+  .time-select {
+    display: flex;
+    align-items: center;
+    gap: 3em;
+  }
+
+  .passage-select select,
+  .time-select select {
+    flex: 1;
+  }
+
+  .results-screen,
+  .settings-screen {
     opacity: 100%;
     position: fixed;
     display: flex;
@@ -448,14 +501,39 @@
     display: flex;
     flex-direction: column;
     gap: 100px;
-    height: 60%;
     background-color: rgb(91, 97, 148);
     width: 60%;
-    padding: 4em 3em 1em 3em;
+    padding: 1.5em 3em 1em 3em;
     border-radius: 2rem;
     border: 3px dashed rgb(38, 38, 84);
     box-shadow: 0px 0px 30px black;
     justify-content: center;
+  }
+
+  .settings-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    background-color: rgb(91, 97, 148);
+    width: 60%;
+    padding: 1.5em 3em 1em 3em;
+    border-radius: 2rem;
+    border: 3px dashed rgb(38, 38, 84);
+    box-shadow: 0px 0px 30px black;
+    justify-content: center;
+  }
+
+  .settings-panel button {
+    margin-top: 4rem;
+  }
+
+  .results-panel h2,
+  .settings-panel h2 {
+    color: white;
+    text-align: center;
+    font-size: 2.5rem;
+    margin: 0;
+    margin-bottom: 1em;
   }
 
   .results-panel p {
@@ -463,7 +541,6 @@
     margin-bottom: 4px;
   }
   .results-info {
-    height: 60%;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -589,7 +666,7 @@
   .type-prep {
     font-size: 2rem;
     width: 80%;
-    display: block;
+    display: inline-block;
   }
 
   .restart-btn {
