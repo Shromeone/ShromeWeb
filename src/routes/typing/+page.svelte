@@ -7,6 +7,13 @@
   import { charPoints, bonus } from "./bonus-points.json";
   import { timeLimits } from "./time-limits.json";
   import "./passages.json";
+  //   import preprocess from 'svelte-preprocess';
+
+  // const config = {
+  //   preprocess: preprocess({ ... })
+  // }
+
+  // export default config;
   const GameState = Object.freeze({
     START: 0,
     PLAY: 1,
@@ -43,7 +50,7 @@
   let focused = false;
 
   let isCompo = false;
-  let timeLimit = 5;
+  let timeLimit = 0;
 
   let points = 0;
   let basePoints = 0;
@@ -58,8 +65,8 @@
 
   let isTimeUp = false;
   $: showInputDisplay = isCompo && input !== "";
-  const scrollDeadzone = 500;
-  const scrollOffset = 100;
+  const scrollLowerBound = 0.5;
+  const scrollUpperBound = 0.2;
   const inputBoxOffset = {
     x: 0,
     y: 20,
@@ -178,12 +185,24 @@
     setTimeout(clearInput, 0);
   }
 
-  function updateScroll() {
-    const currentChar = document.querySelector(`#char-${currentWordIndex}`);
-    const y = currentChar.getBoundingClientRect().top + scrollY;
-    if (Math.abs(scrollY - y) < scrollDeadzone) return;
-    console.log("scroll");
-    scroll({ top: y - scrollOffset, behavior: "smooth" });
+  function updateScroll(offset = 3) {
+    const checkChar = document.querySelector(
+      `#char-${currentWordIndex + offset}`
+    );
+    const y = checkChar.getBoundingClientRect().top / window.innerHeight;
+    console.log(y);
+    if (y > scrollLowerBound || y < scrollUpperBound) {
+      console.log(scrollY, y, window.innerHeight);
+      scroll({
+        top:
+          scrollY +
+          checkChar.getBoundingClientRect().top -
+          window.innerHeight * scrollUpperBound,
+        behavior: "smooth",
+      });
+    }
+    // if (Math.abs(scrollY - y) < scrollDeadzone) return;
+    // console.log("scroll");
   }
 
   function validateInput(word) {
@@ -268,6 +287,7 @@
     if (currentWordIndex === 0) return;
     currentWordIndex--;
     updateInputBoxPos();
+    updateScroll(-3);
     wrongIndexes = wrongIndexes.filter((x) => x !== currentWordIndex);
     correctIndexes = correctIndexes.filter((x) => x !== currentWordIndex);
   }
@@ -320,6 +340,7 @@
     href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC&display=swap"
     rel="stylesheet"
   />
+  <style src="./style.css"></style>
 </head>
 
 <body>
