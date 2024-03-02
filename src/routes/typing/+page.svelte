@@ -7,13 +7,6 @@
   import { charPoints, bonus } from "./bonus-points.json";
   import { timeLimits } from "./time-limits.json";
   import "./passages.json";
-  //   import preprocess from 'svelte-preprocess';
-
-  // const config = {
-  //   preprocess: preprocess({ ... })
-  // }
-
-  // export default config;
   const GameState = Object.freeze({
     START: 0,
     PLAY: 1,
@@ -45,12 +38,13 @@
   let inputDisplay;
   let typePrep;
   let resultsScreen;
-  let settingsScreen;
+
+  let settingsOpen = false;
 
   let focused = false;
 
   let isCompo = false;
-  let timeLimit = 0;
+  let timeLimit = 5;
 
   let points = 0;
   let basePoints = 0;
@@ -65,8 +59,8 @@
 
   let isTimeUp = false;
   $: showInputDisplay = isCompo && input !== "";
-  const scrollLowerBound = 0.5;
-  const scrollUpperBound = 0.2;
+  const scrollDeadzone = 500;
+  const scrollOffset = 100;
   const inputBoxOffset = {
     x: 0,
     y: 20,
@@ -82,6 +76,7 @@
       tryPressEnterFocus(e);
       if (document.activeElement === inputBox) return;
       if (document.activeElement === typePrep) return;
+      if (settingsOpen) return;
       e.preventDefault();
       inputBox.focus();
     };
@@ -185,24 +180,12 @@
     setTimeout(clearInput, 0);
   }
 
-  function updateScroll(offset = 3) {
-    const checkChar = document.querySelector(
-      `#char-${currentWordIndex + offset}`
-    );
-    const y = checkChar.getBoundingClientRect().top / window.innerHeight;
-    console.log(y);
-    if (y > scrollLowerBound || y < scrollUpperBound) {
-      console.log(scrollY, y, window.innerHeight);
-      scroll({
-        top:
-          scrollY +
-          checkChar.getBoundingClientRect().top -
-          window.innerHeight * scrollUpperBound,
-        behavior: "smooth",
-      });
-    }
-    // if (Math.abs(scrollY - y) < scrollDeadzone) return;
-    // console.log("scroll");
+  function updateScroll() {
+    const currentChar = document.querySelector(`#char-${currentWordIndex}`);
+    const y = currentChar.getBoundingClientRect().top + scrollY;
+    if (Math.abs(scrollY - y) < scrollDeadzone) return;
+    console.log("scroll");
+    scroll({ top: y - scrollOffset, behavior: "smooth" });
   }
 
   function validateInput(word) {
@@ -283,12 +266,10 @@
   }
 
   function tryDelete() {
-    console.log("del");
     if (gameState === GameState.FINISH) return;
     if (currentWordIndex === 0) return;
     currentWordIndex--;
     updateInputBoxPos();
-    updateScroll(-3);
     wrongIndexes = wrongIndexes.filter((x) => x !== currentWordIndex);
     correctIndexes = correctIndexes.filter((x) => x !== currentWordIndex);
   }
@@ -325,12 +306,7 @@
   }
 
   function setSettingsVisibility(show = false) {
-    console.log(show);
-    if (show) {
-      settingsScreen.classList.remove("hidden");
-    } else {
-      settingsScreen.classList.add("hidden");
-    }
+    settingsOpen = show;
   }
 </script>
 
@@ -341,7 +317,6 @@
     href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC&display=swap"
     rel="stylesheet"
   />
-  <style src="./style.css"></style>
 </head>
 
 <body>
@@ -416,7 +391,7 @@
       <button on:click={() => setResultsPanelVisibility(true)}>查看成績</button>
     {/if}
 
-    <div class="settings-screen" bind:this={settingsScreen}>
+    <div class="settings-screen {settingsOpen ? '' : 'hidden'}">
       <div class="settings-panel">
         <h2>設定</h2>
         <div class="passage-select">
@@ -426,7 +401,11 @@
               <option value={passage.content}>{passage.title}</option>
             {/each}
           </select>
+
+          
+          
         </div>
+        <textarea bind:value={content} name="content" id="" cols="30" rows="10"></textarea>
         <div class="time-select">
           <p>時間限制</p>
           <select bind:value={timeLimit} id="time" placeholder="">
@@ -621,8 +600,9 @@
     position: relative;
   }
 
-  .wrong {
+  .test-content .wrong {
     color: red;
+    border: 1px solid rgb(194, 143, 143);
   }
 
   .correct {
