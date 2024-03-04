@@ -1,1 +1,1 @@
-export { default as component } from "../../../../src/routes/todo-list/+page.svelte";
+export { default as component } from "../../../../src/routes/text-replacer/+page.svelte";

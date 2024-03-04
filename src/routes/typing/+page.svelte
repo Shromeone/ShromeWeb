@@ -401,11 +401,9 @@
               <option value={passage.content}>{passage.title}</option>
             {/each}
           </select>
-
-          
-          
         </div>
-        <textarea bind:value={content} name="content" id="" cols="30" rows="10"></textarea>
+        <textarea bind:value={content} name="content" id="" cols="30" rows="10"
+        ></textarea>
         <div class="time-select">
           <p>時間限制</p>
           <select bind:value={timeLimit} id="time" placeholder="">
@@ -565,11 +563,11 @@
   body {
     padding: 0;
     margin: 0;
-    background-color: black;
+    /* background-color: black; */
   }
 
   .background {
-    background-color: black;
+    background-color: transparent;
     min-height: 100vh;
     width: 100%;
   }
