@@ -17,7 +17,7 @@
 </script>
 
 <div class="input">
-  <p>{text}</p>
+  <p><slot /></p>
   <input
     class={error ? "error" : ""}
     bind:value

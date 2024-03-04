@@ -101,6 +101,8 @@
   }
 </script>
 
+<h1>Text Replacer</h1>
+<h2>Remove, Replace, Modify custom selected words.</h2>
 <div class="horizontal">
   <div class="input-output">
     <p>Input</p>
@@ -116,6 +118,7 @@
     <button on:click={pasteFromClipboard} class="paste-btn"
       >Paste from Clipboard</button
     >
+    <p>Output</p>
     <div class="result">
       <div class="result-text">{result}</div>
     </div>
@@ -133,16 +136,18 @@
     <Input
       on:update={updateResult}
       on:change={updateResult}
-      text="Regex"
       bind:this={regexInput}
       bind:value={regexCmd}
-    />
+    >
+      <a style="color: white" href="https://regexr.com/" target="_blank"
+        >Regex</a
+      >
+    </Input>
     <Input
       on:update={updateResult}
       on:change={updateResult}
-      text="Replace with"
-      bind:value={replacer}
-    />
+      bind:value={replacer}>Replace with</Input
+    >
     <div class="insert-match">
       <p class="note">
         Note: use &lt;m&gt; to insert the matched characters.<br />(\&lt;m&gt;
@@ -164,6 +169,9 @@
 </div>
 
 <style>
+  Input a {
+    color: white;
+  }
   .horizontal {
     display: grid;
     grid-template-columns: 30% 70%;
@@ -198,6 +206,11 @@
     width: 100%;
   }
 
+  /* .options {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  } */
   .result-text {
     display: inline-block;
     overflow-y: scroll;

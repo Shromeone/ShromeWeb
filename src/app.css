@@ -6,6 +6,7 @@ p {
 body {
     color: white;
     background-color: rgb(39, 39, 39);
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
 
 textarea {
