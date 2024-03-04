@@ -21,11 +21,13 @@
   <input
     class={error ? "error" : ""}
     bind:value
-    placeholder
+    {placeholder}
     on:input={update}
     on:change={update}
     type="text"
   />
+
+  <button on:click={() => (value = "")}>Clear</button>
 </div>
 
 <style>

@@ -4,8 +4,11 @@
   import Checkbox from "./Checkbox.svelte";
   import { onMount } from "svelte";
   import { quickSelectOptions } from "./quick-select";
-  let quickRegex = "";
+  import { matchOptions } from "./match-options";
+
   let quickRegexList = [];
+  let matchOptionsList = [];
+
   let regexInput;
   let regexCmd = "";
   let result = "";
@@ -15,87 +18,178 @@
   onMount(() => {
     updateResult();
   });
+
+  function replaceFunc(match) {
+    let matchWithOptions = match;
+
+    for (let func of matchOptionsList) {
+      matchWithOptions = func(matchWithOptions);
+      matchWithOptions;
+    }
+
+    let newStr = replacer.replace(/(?<!\\)<m>/g, matchWithOptions);
+    newStr = newStr.replace(/\\<m>/, "<m>");
+
+    return newStr;
+  }
   function updateResult() {
     try {
-      result = textToReplace.replace(new RegExp(regexCmd, "g"), replacer);
+      result = textToReplace.replace(new RegExp(regexCmd, "g"), replaceFunc);
       regexInput.setError(false);
-    } catch {
+    } catch (err) {
+      console.log(err.message);
       regexError();
     }
   }
 
   function regexError() {
+    if (!regexInput) return;
     regexInput.setError(true);
   }
 
   function setRegexToQuick() {
     regexCmd = quickRegexList.join("|");
-    updateResult();
   }
 
   function quickRegexChange(val = "", add = true) {
     if (add) {
-      quickRegexList.push(val);
+      if (!quickRegexList.includes(val)) quickRegexList.push(val);
     } else {
-      quickRegexList.splice(quickRegexList.indexOf(val), 1);
+      if (quickRegexList.includes(val))
+        quickRegexList.splice(quickRegexList.indexOf(val), 1);
     }
-    console.log(quickRegexList);
     setRegexToQuick();
   }
 
-  function handleCheckboxClick(e) {
-    quickRegexChange(e.detail.regex, e.detail.checked);
+  function insertMatch() {
+    replacer += "<m>";
+  }
+
+  function matchOptionChange(val = () => "", add = true) {
+    if (add) {
+      matchOptionsList.push(val);
+    } else {
+      matchOptionsList.splice(matchOptionsList.indexOf(val), 1);
+    }
+    matchOptionsList = matchOptionsList;
+    console.log(matchOptionsList);
+  }
+
+  // function handleQuickCheckboxClick(regex, checked) {
+  //   quickRegexChange(regex, e.detail.checked);
+  // }
+
+  // function handleMatchCheckboxClick(e) {
+  //   matchOptionChange(e.detail.param, e.detail.checked);
+  // }
+
+  function pasteFromClipboard() {
+    navigator.clipboard.readText().then((txt) => {
+      textToReplace = txt;
+      updateResult();
+    });
   }
 
   function copyResult() {
     navigator.clipboard.writeText(result);
     alert("Copy success!");
   }
+
+  $: {
+    console.log(replacer, regexCmd, textToReplace, matchOptionsList);
+    updateResult();
+  }
 </script>
 
-<p>Target Text</p>
-<textarea
-  class="content"
-  name="content"
-  cols="30"
-  rows="10"
-  placeholder="Enter the text that you want to replace here"
-  bind:value={textToReplace}
-  on:input={updateResult}
-  on:change={updateResult}
-></textarea>
-<p>Quick select</p>
-<div class="quick-options">
-  {#each quickSelectOptions as option}
-    <Checkbox regex={option.regex} on:click={handleCheckboxClick}
-      >{option.text}</Checkbox
+<div class="horizontal">
+  <div class="input-output">
+    <p>Input</p>
+    <textarea
+      class="content"
+      name="content"
+      rows="10"
+      placeholder="Enter the text that you want to replace here"
+      bind:value={textToReplace}
+      on:input={updateResult}
+      on:change={updateResult}
+    ></textarea>
+    <button on:click={pasteFromClipboard} class="paste-btn"
+      >Paste from Clipboard</button
     >
-  {/each}
-</div>
-<Input
-  on:update={updateResult}
-  text="Regex"
-  bind:this={regexInput}
-  bind:value={regexCmd}
-/>
-<Input on:update={updateResult} text="Replace with" bind:value={replacer} />
-
-<div class="result">
-  <div class="result-text">{result}</div>
-  <button on:click={copyResult} class="copy-btn">Copy Result</button>
+    <div class="result">
+      <div class="result-text">{result}</div>
+    </div>
+    <button on:click={copyResult} class="copy-btn">Copy Result</button>
+  </div>
+  <div class="options">
+    <p>Quick select</p>
+    <div class="quick-options">
+      {#each quickSelectOptions as option}
+        <Checkbox on:click={(e) => quickRegexChange(option.regex, e.detail)}
+          >{option.text}</Checkbox
+        >
+      {/each}
+    </div>
+    <Input
+      on:update={updateResult}
+      on:change={updateResult}
+      text="Regex"
+      bind:this={regexInput}
+      bind:value={regexCmd}
+    />
+    <Input
+      on:update={updateResult}
+      on:change={updateResult}
+      text="Replace with"
+      bind:value={replacer}
+    />
+    <div class="insert-match">
+      <p class="note">
+        Note: use &lt;m&gt; to insert the matched characters.<br />(\&lt;m&gt;
+        to escape)
+      </p>
+      <button on:click={insertMatch}>Insert match</button>
+    </div>
+    <p>Match options</p>
+    <div class="quick-options">
+      {#each matchOptions as option}
+        <Checkbox
+          param={option.func}
+          on:click={(e) => matchOptionChange(option.func, e.detail)}
+          >{option.text}</Checkbox
+        >
+      {/each}
+    </div>
+  </div>
 </div>
 
 <style>
+  .horizontal {
+    display: grid;
+    grid-template-columns: 30% 70%;
+    gap: 0;
+    margin: 1rem;
+  }
   p {
     font-family: Verdana, Geneva, Tahoma, sans-serif;
   }
-  .result-text {
-    display: inline-block;
-    overflow-y: scroll;
-    width: 50%;
-    height: 20rem;
-    border: 1px solid rgb(142, 142, 142);
-    color: white;
+
+  .insert-match {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .note {
+    font-size: 0.7rem;
+  }
+
+  .input-output {
+    width: 20vw;
+  }
+
+  .input-output textarea {
+    width: 100%;
   }
 
   .quick-options {
@@ -104,27 +198,38 @@
     width: 100%;
   }
 
-  .error {
-    border: red;
+  .result-text {
+    display: inline-block;
+    overflow-y: scroll;
+    width: 100%;
+    height: 15rem;
+    border: 1px solid rgb(142, 142, 142);
+    color: white;
   }
-
   .result {
     display: flex;
   }
 
-  .copy-btn {
+  .error {
+    border: red;
+  }
+
+  .copy-btn,
+  .paste-btn {
     border-radius: 5rem;
     border: none;
-    padding: 2em;
-    font-size: 2rem;
+    padding: 1em;
+    font-size: 1rem;
     transition: all 0.3s;
   }
 
-  .copy-btn:hover {
+  .copy-btn:hover,
+  .paste-btn:hover {
     background-color: rgb(125, 0, 21);
   }
 
-  .copy-btn:active {
+  .copy-btn:active,
+  .paste-btn:active {
     opacity: 80%;
   }
 </style>

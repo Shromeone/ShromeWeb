@@ -1,12 +1,13 @@
 <script>
+  // @ts-nocheck
+
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   let checked = false;
-  export let regex = "";
 
   function toggleCheck() {
     checked = !checked;
-    dispatch("click", { regex, checked });
+    dispatch("click", checked);
   }
 </script>
 
@@ -14,7 +15,6 @@
   <button class={checked ? "checked" : ""} on:click={toggleCheck}
     ><slot /></button
   >
-  <!-- <input type="checkbox" bind:checked on:click={toggleCheck} /> -->
 </div>
 
 <style>
