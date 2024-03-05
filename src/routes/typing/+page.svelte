@@ -3,7 +3,7 @@
 
   import { timeToChinese } from "$lib/utils/time-converter.js";
   import { passages } from "./passages.json";
-  import { onMount, tick } from "svelte";
+  import { onDestroy, onMount, tick } from "svelte";
   import { charPoints, bonus } from "./bonus-points.json";
   import { timeLimits } from "./time-limits.json";
   import "./passages.json";
@@ -44,7 +44,7 @@
   let focused = false;
 
   let isCompo = false;
-  let timeLimit = 5;
+  let timeLimit = 60;
 
   let points = 0;
   let basePoints = 0;
@@ -80,6 +80,10 @@
       e.preventDefault();
       inputBox.focus();
     };
+  });
+
+  onDestroy(() => {
+    document.onkeydown = null;
   });
 
   function tryPressEnterFocus(e) {
