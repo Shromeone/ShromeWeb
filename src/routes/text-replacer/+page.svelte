@@ -68,10 +68,12 @@
   function matchOptionChange(val = () => "", add = true) {
     if (add) {
       matchOptionsList.push(val);
+      if (!replacer.includes("<m>")) replacer += "<m>";
     } else {
       matchOptionsList.splice(matchOptionsList.indexOf(val), 1);
     }
     matchOptionsList = matchOptionsList;
+
     console.log(matchOptionsList);
   }
 
@@ -102,7 +104,7 @@
 </script>
 
 <h1>Text Replacer</h1>
-<h2>Remove, Replace, Modify custom selected words.</h2>
+<h2>Remove, Replace, Modify customly selected words.</h2>
 <div class="horizontal">
   <div class="input-output">
     <p>Input</p>
@@ -125,29 +127,23 @@
     <button on:click={copyResult} class="copy-btn">Copy Result</button>
   </div>
   <div class="options">
-    <p>Quick select</p>
-    <div class="quick-options">
-      {#each quickSelectOptions as option}
-        <Checkbox on:click={(e) => quickRegexChange(option.regex, e.detail)}
-          >{option.text}</Checkbox
-        >
-      {/each}
-    </div>
-    <Input
-      on:update={updateResult}
-      on:change={updateResult}
-      bind:this={regexInput}
-      bind:value={regexCmd}
-    >
-      <a style="color: white" href="https://regexr.com/" target="_blank"
-        >Regex</a
+    <div class="fields">
+      <Input
+        on:update={updateResult}
+        on:change={updateResult}
+        bind:this={regexInput}
+        bind:value={regexCmd}
       >
-    </Input>
-    <Input
-      on:update={updateResult}
-      on:change={updateResult}
-      bind:value={replacer}>Replace with</Input
-    >
+        <a style="color: white" href="https://regexr.com/" target="_blank"
+          >Regex</a
+        >
+      </Input>
+      <Input
+        on:update={updateResult}
+        on:change={updateResult}
+        bind:value={replacer}>Replace with</Input
+      >
+    </div>
     <div class="insert-match">
       <p class="note">
         Note: use &lt;m&gt; to insert the matched characters.<br />(\&lt;m&gt;
@@ -155,20 +151,42 @@
       </p>
       <button on:click={insertMatch}>Insert match</button>
     </div>
-    <p>Match options</p>
-    <div class="quick-options">
-      {#each matchOptions as option}
-        <Checkbox
-          param={option.func}
-          on:click={(e) => matchOptionChange(option.func, e.detail)}
-          >{option.text}</Checkbox
-        >
-      {/each}
+
+    <div class="match-options">
+      <p>Match options</p>
+      <div class="quick-options">
+        {#each matchOptions as option}
+          <Checkbox
+            param={option.func}
+            on:click={(e) => matchOptionChange(option.func, e.detail)}
+            >{option.text}</Checkbox
+          >
+        {/each}
+      </div>
+    </div>
+
+    <div class="quick-select">
+      <p>Quick select</p>
+      <div class="quick-options">
+        {#each quickSelectOptions as option}
+          <Checkbox on:click={(e) => quickRegexChange(option.regex, e.detail)}
+            >{option.text}</Checkbox
+          >
+        {/each}
+      </div>
     </div>
   </div>
 </div>
 
 <style>
+  .fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  h2 {
+    font-size: 1.3rem;
+  }
   Input a {
     color: white;
   }
@@ -186,6 +204,11 @@
     display: flex;
     width: 100%;
     justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .insert-match button {
+    flex: 1;
   }
 
   .note {
@@ -206,16 +229,16 @@
     width: 100%;
   }
 
-  /* .options {
+  .options {
     display: flex;
     flex-direction: column;
     gap: 2rem;
-  } */
+  }
   .result-text {
     display: inline-block;
     overflow-y: scroll;
     width: 100%;
-    height: 15rem;
+    height: 12rem;
     border: 1px solid rgb(142, 142, 142);
     color: white;
   }
