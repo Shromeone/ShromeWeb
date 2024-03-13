@@ -9,7 +9,9 @@
     if (blueNums.includes(num)) return "skyblue";
     return "limegreen";
   }
-  const hotNumbers = [49, 22, 10, 24, 30, 13, 9, 33, 6, 4, 14];
+  const hotNumbers = [
+    49, 22, 10, 24, 30, 13, 9, 33, 6, 4, 14, 35, 12, 20, 28, 7, 34,
+  ];
   let currentNumbers = [];
   function generateNumbers() {
     const genNumbers = [];
@@ -23,19 +25,40 @@
 </script>
 
 <h2>六合彩生成器</h2>
-<button class="gen-btn" on:click={generateNumbers}> 發發發！</button>
+<div class="gen-btn-div">
+  <button class="gen-btn" on:click={generateNumbers}>發發發！</button>
+</div>
 <p>中獎號碼：</p>
-{#each currentNumbers as num}
-  <p style="border: 1rem solid {func(num)};" class="result-num">{num}</p>
-{/each}
+<div class="nums">
+  {#each currentNumbers as num}
+    <p style="border: 1rem solid {func(num)};" class="result-num">{num}</p>
+  {/each}
+</div>
 
 <style>
+  .gen-btn-div {
+    margin: 0%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
   .gen-btn {
-    padding: 1em 3em;
+    width: 50vw;
+    height: 20vw;
     font-size: 3rem;
   }
 
+  h2 {
+    font-size: 3rem;
+    text-align: center;
+  }
+
+  .nums {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+  }
   .result-num {
+    flex-shrink: 0;
     display: inline-block;
     width: 3rem;
     height: 3rem;
@@ -45,8 +68,13 @@
     font-weight: bolder;
     font-size: 2rem;
     text-align: center;
-    vertical-align: middle;
     border-radius: 100rem;
     margin-right: 0.5rem;
+  }
+
+  @media (max-width: 600px) {
+    .nums {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
   }
 </style>
