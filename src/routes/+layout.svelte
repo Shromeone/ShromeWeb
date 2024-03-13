@@ -9,6 +9,7 @@
   <!-- <a href="/todo-list">Todo List</a> -->
   <a href="/typing">Typing</a>
   <a href="/text-replacer">Text Replacer</a>
+  <a href="/big-6-generator">六合彩生成器</a>
 </nav>
 <slot />
 
