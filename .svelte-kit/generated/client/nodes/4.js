@@ -1,1 +1,1 @@
-export { default as component } from "../../../../src/routes/big-6-generator/+page.svelte";
+export { default as component } from "../../../../src/routes/cart-quantity/+page.svelte";

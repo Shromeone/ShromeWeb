@@ -17,8 +17,8 @@ export const server_loads = [];
 export const dictionary = {
 		"/": [2],
 		"/about": [3],
-		"/big-6-generator": [4],
-		"/cart-quantity": [5],
+		"/cart-quantity": [4],
+		"/mark-6-generator": [5],
 		"/text-replacer": [6],
 		"/todo-list": [7],
 		"/typing": [8]

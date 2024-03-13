@@ -53,7 +53,7 @@
   {#each currentNumbers as num, idx}
     <p
       id="ball-{idx}"
-      style="border: 1rem solid {func(num)};"
+      style="border: 2.5vw solid {func(num)};"
       class="result-num ball-animation hidden"
     >
       {num}
@@ -74,7 +74,7 @@
   .gen-btn {
     width: 50vw;
     height: 20vw;
-    font-size: 3rem;
+    font-size: 10vw;
   }
 
   h2 {
@@ -110,16 +110,16 @@
   .result-num {
     flex-shrink: 0;
     display: inline-block;
-    width: 3rem;
-    height: 3rem;
-    line-height: 3rem;
+    width: 10vw;
+    height: 10vw;
+    line-height: 10vw;
     color: black;
     background-color: white;
     font-weight: bolder;
-    font-size: 2rem;
+    font-size: 5vw;
     text-align: center;
     border-radius: 100rem;
-    margin-right: 0.5rem;
+    margin-right: 1vw;
   }
 
   @media (max-width: 600px) {

@@ -7,9 +7,9 @@
   <!-- <a href="/about">about</a> -->
   <!-- <a href="/cart-quantity">Cart quantity</a> -->
   <!-- <a href="/todo-list">Todo List</a> -->
-  <a href="/typing">Typing</a>
+  <a href="/typing">打字練習</a>
   <a href="/text-replacer">Text Replacer</a>
-  <a href="/big-6-generator">六合彩生成器</a>
+  <a href="/mark-6-generator">六合彩生成器</a>
 </nav>
 <slot />
 
