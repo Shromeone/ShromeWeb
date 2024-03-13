@@ -1,8 +1,5 @@
 <script>
   // @ts-nocheck
-
-  import { tick } from "svelte";
-
   // @ts-nocheck
   const redNums = [
     1, 2, 7, 8, 12, 13, 18, 19, 23, 24, 29, 30, 34, 35, 40, 45, 46,
@@ -30,7 +27,6 @@
         el.offsetHeight; /* trigger reflow */
         el.style.animation = null;
       }, 200 * i);
-      //   await tick().then(() => {});
     }
   }
 
@@ -47,8 +43,6 @@
     }, 0);
   }
 </script>
-
-import {tick} from "svelte"
 
 <h2>六合彩生成器</h2>
 <div class="gen-btn-div">
