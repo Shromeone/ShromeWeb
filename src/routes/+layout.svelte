@@ -4,6 +4,7 @@
 
 <svelte:head>
   <link rel="icon" type="image/ico" href="favicon.ico" />
+  <title>Shromeone's Web</title>
 </svelte:head>
 
 <nav>
