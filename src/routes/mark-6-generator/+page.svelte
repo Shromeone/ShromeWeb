@@ -78,7 +78,7 @@
 </script>
 
 <body>
-  <h2>六合彩生成器</h2>
+  <h2>六合彩神器</h2>
   <div class="gen-btn-div">
     <button class="gen-btn" on:click={generateNumbers}>發發發！</button>
   </div>

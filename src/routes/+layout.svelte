@@ -2,6 +2,10 @@
   import "../app.css";
 </script>
 
+<svelte:head>
+  <link rel="icon" href="$lib/images/favicon.ico" />
+</svelte:head>
+
 <nav>
   <a href="/">Home</a>
   <!-- <a href="/about">about</a> -->
@@ -9,7 +13,7 @@
   <!-- <a href="/todo-list">Todo List</a> -->
   <a href="/typing">打字練習</a>
   <a href="/text-replacer">Text Replacer</a>
-  <a href="/mark-6-generator">六合彩生成器</a>
+  <a href="/mark-6-generator">六合彩神器</a>
 </nav>
 <slot />
 
