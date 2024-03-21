@@ -3,7 +3,7 @@
 </script>
 
 <svelte:head>
-  <link rel="icon" href="$lib/images/favicon.ico" />
+  <link rel="icon" type="image/ico" href="favicon.ico" />
 </svelte:head>
 
 <nav>

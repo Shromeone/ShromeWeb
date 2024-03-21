@@ -1,6 +1,5 @@
 <script>
   // @ts-nocheck
-
   import { timeToChinese } from "$lib/utils/time-converter.js";
   import { passages } from "./passages.json";
   import { onDestroy, onMount, tick } from "svelte";
