@@ -184,6 +184,7 @@
   }
 
   function keyDown(e) {
+    typeCancelled = false;
     if (e.key === "Backspace") {
       tryDelete();
     }
@@ -191,11 +192,15 @@
 
   function halfInput(e) {
     if (e.inputType === "deleteContentBackward") return;
-    typeCancelled = false;
-    if (e.inputType === "insertCompositionText") return;
+    if (e.inputType === "insertCompositionText") {
+      typeCancelled = false;
+      return;
+    }
+
     isCompo = false;
     validateInput(e.data);
     console.log("half input");
+    console.log(e.inputType);
     setTimeout(clearInput, 0);
   }
 
