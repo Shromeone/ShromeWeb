@@ -328,10 +328,12 @@
       <input
         class="type-prep"
         type="text"
-        placeholder="這裡可以調整輸入法，準備開始打字(按Enter 進入測試)"
+        placeholder="喺度調整輸入法，準備好就撳Enter進入測試"
         bind:this={typePrep}
       />
-      <button on:click={() => setSettingsVisibility(true)}>設定</button>
+      <button class="round-btn" on:click={() => setSettingsVisibility(true)}
+        >設定</button
+      >
     {/if}
     <div class="info-bar">
       {#if gameState !== 3}
@@ -388,10 +390,12 @@
     </div>
 
     {#if gameState !== GameState.START}
-      <button class="restart-btn" on:click={restart}>重新開始</button>
+      <button class="round-btn" on:click={restart}>重新開始</button>
     {/if}
     {#if gameState === GameState.FINISH}
-      <button on:click={() => setResultsPanelVisibility(true)}>查看成績</button>
+      <button class="round-btn" on:click={() => setResultsPanelVisibility(true)}
+        >查看成績</button
+      >
     {/if}
 
     <div class="settings-screen {settingsOpen ? '' : 'hidden'}">
@@ -463,7 +467,7 @@
             on:click={() => {
               setResultsPanelVisibility(false);
               restart();
-            }}>再來一次</button
+            }}>嚟多次</button
           >
         </div>
       </div>
@@ -672,14 +676,14 @@
     display: inline-block;
   }
 
-  .restart-btn {
+  .round-btn {
     padding: 1em;
     font-size: 1rem;
     border-radius: 1rem;
     border: none;
   }
 
-  .restart-btn:hover {
+  .round-btn:hover {
     opacity: 80%;
   }
 </style>
