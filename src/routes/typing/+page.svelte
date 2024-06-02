@@ -87,6 +87,11 @@
     document.onkeydown = null;
   });
 
+  function tryFocus() {
+    if (document.activeElement === inputBox) return;
+    inputBox.focus();
+  }
+
   function tryPressEnterFocus(e) {
     if (document.activeElement !== typePrep) return;
     if (e.key !== "Enter") return;
@@ -119,7 +124,7 @@
     startTime = Date.now();
     updateInfoInterval = setInterval(updateInfo, 2000);
     updateTimerInterval = setInterval(updateTimer, 100);
-    focusInputInterval = setInterval(() => inputBox.focus(), 300);
+    focusInputInterval = setInterval(tryFocus, 300);
   }
 
   function updateTimer(time = -1) {
@@ -179,7 +184,6 @@
   }
 
   function keyDown(e) {
-    typeCancelled = false;
     if (e.key === "Backspace") {
       tryDelete();
     }
@@ -187,6 +191,7 @@
 
   function halfInput(e) {
     if (e.inputType === "deleteContentBackward") return;
+    typeCancelled = false;
     if (e.inputType === "insertCompositionText") return;
     isCompo = false;
     validateInput(e.data);
@@ -206,7 +211,10 @@
     if (gameState === GameState.FINISH) return;
     console.log("input: " + input);
     console.log("innerHTML: " + inputBox.innerHTML);
-    if (typeCancelled) return;
+    if (typeCancelled) {
+      console.log("type cancelled");
+      return;
+    }
     for (let i = 0; i < word.length; i++) {
       currentWord = content[currentWordIndex];
       const char = word[i];
