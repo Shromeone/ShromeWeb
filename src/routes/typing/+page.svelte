@@ -37,6 +37,7 @@
   let inputBox;
   let inputDisplay;
   let typePrep;
+  let typeCancelled = false;
   let resultsScreen;
 
   let settingsOpen = false;
@@ -96,6 +97,11 @@
     console.log("cleared input");
     inputBox.innerHTML = "";
     input = "";
+  }
+
+  function cancelInput() {
+    clearInput();
+    typeCancelled = true;
   }
 
   function toHalfWidth(x) {
@@ -173,6 +179,7 @@
   }
 
   function keyDown(e) {
+    typeCancelled = false;
     if (e.key === "Backspace") {
       tryDelete();
     }
@@ -183,6 +190,7 @@
     if (e.inputType === "insertCompositionText") return;
     isCompo = false;
     validateInput(e.data);
+    console.log("half input");
     setTimeout(clearInput, 0);
   }
 
@@ -196,7 +204,9 @@
 
   function validateInput(word) {
     if (gameState === GameState.FINISH) return;
-    if (!input) return;
+    console.log("input: " + input);
+    console.log("innerHTML: " + inputBox.innerHTML);
+    if (typeCancelled) return;
     for (let i = 0; i < word.length; i++) {
       currentWord = content[currentWordIndex];
       const char = word[i];
@@ -375,7 +385,7 @@
     </div>
     <div class="test-content">
       {#each content as char, index (index)}
-        <div class="char" id="char-{index}" on:mouseenter={clearInput}>
+        <div class="char" id="char-{index}" on:mouseenter={cancelInput}>
           <a
             href={"https://www.hkcards.com/cj/cj-char-" + char + ".html"}
             target="_blank"
