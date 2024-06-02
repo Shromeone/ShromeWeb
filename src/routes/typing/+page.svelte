@@ -372,19 +372,24 @@
     <div class="test-content">
       {#each content as char, index (index)}
         <div class="char" id="char-{index}">
-          {#if index === currentWordIndex}
-            <div class={focused ? "" : "inactive"}>
-              <div class="current-char">
-                <p>{char}</p>
+          <a
+            href={"https://www.hkcards.com/cj/cj-char-" + char + ".html"}
+            target="_blank"
+          >
+            {#if index === currentWordIndex}
+              <div class={focused ? "" : "inactive"}>
+                <div class="current-char">
+                  <p>{char}</p>
+                </div>
               </div>
-            </div>
-          {:else if wrongIndexes.includes(index)}
-            <p class="wrong">{char}</p>
-          {:else if correctIndexes.includes(index)}
-            <p class="correct">{char}</p>
-          {:else}
-            <p>{char}</p>
-          {/if}
+            {:else if wrongIndexes.includes(index)}
+              <p class="wrong">{char}</p>
+            {:else if correctIndexes.includes(index)}
+              <p class="correct">{char}</p>
+            {:else}
+              <p>{char}</p>
+            {/if}
+          </a>
         </div>
       {/each}
     </div>
