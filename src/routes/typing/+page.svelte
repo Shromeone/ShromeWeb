@@ -32,6 +32,7 @@
   let timeElapsed = 0;
   let updateTimerInterval = null;
   let updateInfoInterval = null;
+  let focusInputInterval = null;
 
   let inputBox;
   let inputDisplay;
@@ -92,6 +93,7 @@
   }
 
   function clearInput() {
+    console.log("cleared input");
     inputBox.innerHTML = "";
     input = "";
   }
@@ -111,6 +113,7 @@
     startTime = Date.now();
     updateInfoInterval = setInterval(updateInfo, 2000);
     updateTimerInterval = setInterval(updateTimer, 100);
+    focusInputInterval = setInterval(() => inputBox.focus(), 300);
   }
 
   function updateTimer(time = -1) {
@@ -122,7 +125,6 @@
 
     const timeElapsedInSec = timeElapsed / 1000;
     if (timeLimit <= 0) return;
-    console.log(timeLimit);
     if (timeElapsedInSec > timeLimit) {
       timeUp();
     }
@@ -140,6 +142,7 @@
   function finishGame() {
     clearInterval(updateTimerInterval);
     clearInterval(updateInfoInterval);
+    clearInterval(focusInputInterval);
     gameState = GameState.FINISH;
     console.log(wrongWords, content.length);
     updateInfo();
@@ -193,6 +196,7 @@
 
   function validateInput(word) {
     if (gameState === GameState.FINISH) return;
+    if (!input) return;
     for (let i = 0; i < word.length; i++) {
       currentWord = content[currentWordIndex];
       const char = word[i];
@@ -371,7 +375,7 @@
     </div>
     <div class="test-content">
       {#each content as char, index (index)}
-        <div class="char" id="char-{index}">
+        <div class="char" id="char-{index}" on:mouseenter={clearInput}>
           <a
             href={"https://www.hkcards.com/cj/cj-char-" + char + ".html"}
             target="_blank"
