@@ -45,7 +45,7 @@
   let focused = false;
 
   let isCompo = false;
-  let timeLimit = 60;
+  let timeLimit = 0;
 
   let points = 0;
   let basePoints = 0;
