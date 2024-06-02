@@ -308,6 +308,7 @@
     inputBox.focus();
     clearInterval(updateTimerInterval);
     clearInterval(updateInfoInterval);
+    clearInterval(focusInputInterval);
     updateTimer(0);
     updateInputBoxPos();
     updateScroll();
