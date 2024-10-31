@@ -11,7 +11,7 @@ body {
 
 textarea {
     color: black;
-    background-color: rgb(74, 74, 74);
+    background-color: var(--dark);
     border-radius: .8rem;
     color: lightgray;
     resize: none;
@@ -22,6 +22,13 @@ input {
 }
 
 button {
-    background-color: rgb(75, 75, 75);
-    color: lightgray;
+    background-color: var(--dark);  
+    color: var(--lightgray);
+}
+
+:root {
+    --dark: rgb(75, 75, 75);
+    --light: lightgrey;
+    --primary-color: darkred;
+    --secondary-color: green;
 }

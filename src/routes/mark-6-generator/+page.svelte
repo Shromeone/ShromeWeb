@@ -1,6 +1,4 @@
 <script>
-  // @ts-nocheck
-
   let firstPress = true;
   let ballAnimationTimeouts = [];
   const redNums = [

@@ -15,6 +15,7 @@
   <a href="/typing">打字練習</a>
   <a href="/text-replacer">Text Replacer</a>
   <a href="/mark-6-generator">六合彩神器</a>
+  <a href="/gas">Testing</a>
 </nav>
 <slot />
 
@@ -22,7 +23,7 @@
   nav {
     width: 100%;
     height: 2rem;
-    background-color: rgb(77, 77, 77);
+    background-color: var(--dark);
   }
   a {
     font-family: Verdana;

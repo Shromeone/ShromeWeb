@@ -9,7 +9,8 @@ export const nodes = [
 	() => import('./nodes/5'),
 	() => import('./nodes/6'),
 	() => import('./nodes/7'),
-	() => import('./nodes/8')
+	() => import('./nodes/8'),
+	() => import('./nodes/9')
 ];
 
 export const server_loads = [];
@@ -18,10 +19,11 @@ export const dictionary = {
 		"/": [2],
 		"/about": [3],
 		"/cart-quantity": [4],
-		"/mark-6-generator": [5],
-		"/text-replacer": [6],
-		"/todo-list": [7],
-		"/typing": [8]
+		"/gas": [5],
+		"/mark-6-generator": [6],
+		"/text-replacer": [7],
+		"/todo-list": [8],
+		"/typing": [9]
 	};
 
 export const hooks = {
@@ -30,4 +32,4 @@ export const hooks = {
 	reroute: (() => {})
 };
 
-export { default as root } from '../root.svelte';
+export { default as root } from '../root.js';

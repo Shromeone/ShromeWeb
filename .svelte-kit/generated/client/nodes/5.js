@@ -1,1 +1,1 @@
-export { default as component } from "../../../../src/routes/mark-6-generator/+page.svelte";
+export { default as component } from "../../../../src/routes/gas/+page.svelte";
