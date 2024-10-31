@@ -1,7 +1,7 @@
 <script>
-  let todoInput = "";
-  let todoDate = "";
-  let todoList = [{ content: "blah", date: "someday" }];
+  let todoInput = $state("");
+  let todoDate = $state("");
+  let todoList = $state([{ content: "blah", date: "someday" }]);
 
   function add() {
     todoList = [
@@ -24,19 +24,19 @@
   <input
     type="text"
     bind:value={todoInput}
-    on:keypress={() => {
+    onkeypress={() => {
       if (key !== "Enter") return;
       add();
     }}
   />
   <input type="date" bind:value={todoDate} />
-  <button on:click={add}>Add</button>
+  <button onclick={add}>Add</button>
 </div>
 <div class="todo-grid">
   {#each todoList as todo}
     <p>{todo.content}</p>
     <p>{todo.date}</p>
-    <button on:click={() => remove(todo)}>Del</button>
+    <button onclick={() => remove(todo)}>Del</button>
   {/each}
 </div>
 

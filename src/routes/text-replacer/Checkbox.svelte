@@ -2,8 +2,10 @@
   // @ts-nocheck
 
   import { createEventDispatcher } from "svelte";
+  /** @type {{children?: import('svelte').Snippet}} */
+  let { children } = $props();
   const dispatch = createEventDispatcher();
-  let checked = false;
+  let checked = $state(false);
 
   function toggleCheck() {
     checked = !checked;
@@ -12,8 +14,8 @@
 </script>
 
 <div class="checkbox">
-  <button class={checked ? "checked" : ""} on:click={toggleCheck}
-    ><slot /></button
+  <button class={checked ? "checked" : ""} onclick={toggleCheck}
+    >{@render children?.()}</button
   >
 </div>
 

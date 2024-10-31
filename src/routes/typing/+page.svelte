@@ -1,4 +1,6 @@
 <script>
+  import { run, handlers } from 'svelte/legacy';
+
   // @ts-nocheck
   import { timeToChinese } from "$lib/utils/time-converter.js";
   import { passages } from "./passages.json";
@@ -13,53 +15,49 @@
   });
   const removeContentSpace = true;
 
-  let content = passages[0].content;
+  let content = $state(passages[0].content);
 
-  let currentWordIndex = 0;
-  let input;
+  let currentWordIndex = $state(0);
+  let input = $state();
 
-  $: correctWords = correctIndexes.length;
-  $: wrongWords = wrongIndexes.length;
-  let correctIndexes = [];
-  let wrongIndexes = [];
+  let correctIndexes = $state([]);
+  let wrongIndexes = $state([]);
   let startTime = 0;
-  let gameState = GameState.START;
-  let timeTakenInMs = 0;
-  let WPM = 0;
-  let accuracy = 0;
+  let gameState = $state(GameState.START);
+  let timeTakenInMs = $state(0);
+  let WPM = $state(0);
+  let accuracy = $state(0);
 
-  $: currentWord = content[currentWordIndex];
-  let timeElapsed = 0;
+  let timeElapsed = $state(0);
   let updateTimerInterval = null;
   let updateInfoInterval = null;
   let focusInputInterval = null;
 
-  let inputBox;
-  let inputDisplay;
-  let typePrep;
+  let inputBox = $state();
+  let inputDisplay = $state();
+  let typePrep = $state();
   let typeCancelled = false;
-  let resultsScreen;
+  let resultsScreen = $state();
 
-  let settingsOpen = false;
+  let settingsOpen = $state(false);
 
-  let focused = false;
+  let focused = $state(false);
 
-  let isCompo = false;
-  let timeLimit = 0;
+  let isCompo = $state(false);
+  let timeLimit = $state(0);
 
-  let points = 0;
-  let basePoints = 0;
-  let accuracyPoint = 0;
-  let speedPoint = 0;
-  let timePoint = 0;
-  let accuracyCutoff = 0;
-  let accuracyMultiplier = 0;
-  let speedCutoff = 0;
-  let speedMultiplier = 0;
-  let timeLeft = 0;
+  let points = $state(0);
+  let basePoints = $state(0);
+  let accuracyPoint = $state(0);
+  let speedPoint = $state(0);
+  let timePoint = $state(0);
+  let accuracyCutoff = $state(0);
+  let accuracyMultiplier = $state(0);
+  let speedCutoff = $state(0);
+  let speedMultiplier = $state(0);
+  let timeLeft = $state(0);
 
   let isTimeUp = false;
-  $: showInputDisplay = isCompo && input !== "";
   const scrollDeadzone = 500;
   const scrollOffset = 100;
   const inputBoxOffset = {
@@ -339,6 +337,13 @@
   function setSettingsVisibility(show = false) {
     settingsOpen = show;
   }
+  let correctWords = $derived(correctIndexes.length);
+  let wrongWords = $derived(wrongIndexes.length);
+  let currentWord;
+  run(() => {
+    currentWord = content[currentWordIndex];
+  });
+  let showInputDisplay = $derived(isCompo && input !== "");
 </script>
 
 <head>
@@ -359,7 +364,7 @@
         placeholder="喺度調整輸入法，準備好就撳Enter進入測試"
         bind:this={typePrep}
       />
-      <button class="round-btn" on:click={() => setSettingsVisibility(true)}
+      <button class="round-btn" onclick={() => setSettingsVisibility(true)}
         >設定</button
       >
     {/if}
@@ -380,13 +385,12 @@
       type="text"
       id="type-input"
       placeholder={gameState === GameState.PLAY ? "" : "在這裡開始打字"}
-      on:compositionupdate={compoUpdate}
-      on:compositionend={compoEnd}
-      on:input={startTimer}
-      on:input={halfInput}
-      on:keydown={keyDown}
-      on:focus={() => (focused = true)}
-      on:focusout={() => (focused = false)}
+      oncompositionupdate={compoUpdate}
+      oncompositionend={compoEnd}
+      oninput={handlers(startTimer, halfInput)}
+      onkeydown={keyDown}
+      onfocus={() => (focused = true)}
+      onfocusout={() => (focused = false)}
       bind:value={input}
       bind:this={inputBox}
     />
@@ -399,7 +403,7 @@
     </div>
     <div class="test-content">
       {#each content as char, index (index)}
-        <div class="char" id="char-{index}" on:mouseenter={cancelInput}>
+        <div class="char" id="char-{index}" onmouseenter={cancelInput}>
           <a
             href={"https://www.hkcards.com/cj/cj-char-" + char + ".html"}
             target="_blank"
@@ -423,10 +427,10 @@
     </div>
 
     {#if gameState !== GameState.START}
-      <button class="round-btn" on:click={restart}>重新開始</button>
+      <button class="round-btn" onclick={restart}>重新開始</button>
     {/if}
     {#if gameState === GameState.FINISH}
-      <button class="round-btn" on:click={() => setResultsPanelVisibility(true)}
+      <button class="round-btn" onclick={() => setResultsPanelVisibility(true)}
         >查看成績</button
       >
     {/if}
@@ -453,7 +457,7 @@
             {/each}
           </select>
         </div>
-        <button on:click={() => setSettingsVisibility(false)}>關閉</button>
+        <button onclick={() => setSettingsVisibility(false)}>關閉</button>
       </div>
     </div>
 
@@ -494,10 +498,10 @@
           </p>
         </div>
         <div class="panel-buttons">
-          <button on:click={() => setResultsPanelVisibility(false)}>關閉</button
+          <button onclick={() => setResultsPanelVisibility(false)}>關閉</button
           >
           <button
-            on:click={() => {
+            onclick={() => {
               setResultsPanelVisibility(false);
               restart();
             }}>嚟多次</button

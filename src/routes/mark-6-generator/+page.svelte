@@ -14,7 +14,7 @@
     OnlyHot: 1,
     NoHot: 2,
   };
-  let chooseOptions = ChooseOptions.NoHot;
+  let chooseOptions = $state(ChooseOptions.NoHot);
   function toggleHotNumbers(option) {
     chooseOptions = option;
   }
@@ -27,7 +27,7 @@
   const hotNumbers = [
     4, 6, 7, 9, 10, 12, 13, 14, 20, 22, 24, 28, 30, 33, 34, 35, 49,
   ];
-  let currentNumbers = [];
+  let currentNumbers = $state([]);
 
   function setBallsInvisible() {
     if (firstPress) return;
@@ -78,7 +78,7 @@
 <body>
   <h2>六合彩神器</h2>
   <div class="gen-btn-div">
-    <button class="gen-btn" on:click={generateNumbers}>發發發！</button>
+    <button class="gen-btn" onclick={generateNumbers}>發發發！</button>
   </div>
   <p>中獎號碼：</p>
   <div class="nums">

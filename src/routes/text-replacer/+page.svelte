@@ -1,4 +1,6 @@
 <script>
+  import { run } from 'svelte/legacy';
+
   // @ts-nocheck
   import Input from "./Input.svelte";
   import Checkbox from "./Checkbox.svelte";
@@ -7,13 +9,13 @@
   import { matchOptions } from "./match-options";
 
   let quickRegexList = [];
-  let matchOptionsList = [];
+  let matchOptionsList = $state([]);
 
-  let regexInput;
-  let regexCmd = "";
-  let result = "";
-  let textToReplace = "A quick brown fox jumps over the lazy dog.";
-  let replacer = "";
+  let regexInput = $state();
+  let regexCmd = $state("");
+  let result = $state("");
+  let textToReplace = $state("A quick brown fox jumps over the lazy dog.");
+  let replacer = $state("");
 
   onMount(() => {
     updateResult();
@@ -97,10 +99,10 @@
     alert("Copy success!");
   }
 
-  $: {
+  run(() => {
     console.log(replacer, regexCmd, textToReplace, matchOptionsList);
     updateResult();
-  }
+  });
 </script>
 
 <h1>Text Replacer</h1>
@@ -114,17 +116,17 @@
       rows="10"
       placeholder="Enter the text that you want to replace here"
       bind:value={textToReplace}
-      on:input={updateResult}
-      on:change={updateResult}
+      oninput={updateResult}
+      onchange={updateResult}
     ></textarea>
-    <button on:click={pasteFromClipboard} class="paste-btn"
+    <button onclick={pasteFromClipboard} class="paste-btn"
       >Paste from Clipboard</button
     >
     <p>Output</p>
     <div class="result">
       <div class="result-text">{result}</div>
     </div>
-    <button on:click={copyResult} class="copy-btn">Copy Result</button>
+    <button onclick={copyResult} class="copy-btn">Copy Result</button>
   </div>
   <div class="options">
     <div class="fields">
@@ -149,7 +151,7 @@
         Note: use &lt;m&gt; to insert the matched characters.<br />(\&lt;m&gt;
         to escape)
       </p>
-      <button on:click={insertMatch}>Insert match</button>
+      <button onclick={insertMatch}>Insert match</button>
     </div>
 
     <div class="match-options">

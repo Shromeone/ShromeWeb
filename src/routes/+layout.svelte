@@ -1,5 +1,7 @@
 <script>
   import "../app.css";
+  /** @type {{children?: import('svelte').Snippet}} */
+  let { children } = $props();
 </script>
 
 <svelte:head>
@@ -17,7 +19,7 @@
   <a href="/mark-6-generator">六合彩神器</a>
   <a href="/gas">Testing</a>
 </nav>
-<slot />
+{@render children?.()}
 
 <style>
   nav {

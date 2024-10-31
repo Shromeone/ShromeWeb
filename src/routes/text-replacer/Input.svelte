@@ -10,24 +10,28 @@
     error = isError;
   }
 
-  let error = false;
-  export let text = "Item";
-  export let placeholder = "";
-  export let value = "";
+  let error = $state(false);
+  /** @type {{text?: string, placeholder?: string, value?: string, children?: import('svelte').Snippet}} */
+  let {
+    text = "Item",
+    placeholder = "",
+    value = $bindable(""),
+    children
+  } = $props();
 </script>
 
 <div class="input">
-  <p><slot /></p>
+  <p>{@render children?.()}</p>
   <input
     class={error ? "error" : ""}
     bind:value
     {placeholder}
-    on:input={update}
-    on:change={update}
+    oninput={update}
+    onchange={update}
     type="text"
   />
 
-  <button on:click={() => (value = "")}>Clear</button>
+  <button onclick={() => (value = "")}>Clear</button>
 </div>
 
 <style>
