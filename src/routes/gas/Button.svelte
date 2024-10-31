@@ -11,6 +11,6 @@
 
 <style>
   button {
-    color: var(--secondary-color);
+    color: var(--light);
   }
 </style>

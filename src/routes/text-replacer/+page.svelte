@@ -1,5 +1,5 @@
 <script>
-  import { run } from 'svelte/legacy';
+  import { run } from "svelte/legacy";
 
   // @ts-nocheck
   import Input from "./Input.svelte";
@@ -171,7 +171,7 @@
       <p>Quick select</p>
       <div class="quick-options">
         {#each quickSelectOptions as option}
-          <Checkbox on:click={(e) => quickRegexChange(option.regex, e.detail)}
+          <Checkbox :click={(e) => quickRegexChange(option.regex, e.detail)}
             >{option.text}</Checkbox
           >
         {/each}

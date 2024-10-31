@@ -1,5 +1,5 @@
 <script>
-  import { run, handlers } from 'svelte/legacy';
+  import { run, handlers } from "svelte/legacy";
 
   // @ts-nocheck
   import { timeToChinese } from "$lib/utils/time-converter.js";
@@ -339,178 +339,172 @@
   }
   let correctWords = $derived(correctIndexes.length);
   let wrongWords = $derived(wrongIndexes.length);
-  let currentWord;
-  run(() => {
-    currentWord = content[currentWordIndex];
-  });
+  let currentWord = $derived(content[currentWordIndex]);
   let showInputDisplay = $derived(isCompo && input !== "");
 </script>
 
-<head>
+<svelte:head>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
     href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC&display=swap"
     rel="stylesheet"
   />
-</head>
+</svelte:head>
 
-<body>
-  <div class="background">
-    {#if gameState !== GameState.PLAY}
-      <input
-        class="type-prep"
-        type="text"
-        placeholder="喺度調整輸入法，準備好就撳Enter進入測試"
-        bind:this={typePrep}
-      />
-      <button class="round-btn" onclick={() => setSettingsVisibility(true)}
-        >設定</button
-      >
-    {/if}
-    <div class="info-bar">
-      {#if gameState !== 3}
-        {#if timeLimit > 0}
-          <p>剩餘時間: {Math.ceil(timeLimit - timeElapsed / 1000)}秒</p>
-        {/if}
-        <p>時間: {(timeTakenInMs / 1000).toFixed(2) + "s"}</p>
-        <p>速度: {WPM.toFixed(1)}WPM</p>
-        <p>準確度: {(accuracy * 100).toFixed(1) + "%"}</p>
-        <p>正確: {correctWords}字</p>
-        <p>錯誤: {wrongWords}字</p>
-        <p>分數: {points}</p>
-      {/if}
-    </div>
+<div class="background">
+  {#if gameState !== GameState.PLAY}
     <input
+      class="type-prep"
       type="text"
-      id="type-input"
-      placeholder={gameState === GameState.PLAY ? "" : "在這裡開始打字"}
-      oncompositionupdate={compoUpdate}
-      oncompositionend={compoEnd}
-      oninput={handlers(startTimer, halfInput)}
-      onkeydown={keyDown}
-      onfocus={() => (focused = true)}
-      onfocusout={() => (focused = false)}
-      bind:value={input}
-      bind:this={inputBox}
+      placeholder="喺度調整輸入法，準備好就撳Enter進入測試"
+      bind:this={typePrep}
     />
-    <div
-      id="input-display"
-      class={showInputDisplay ? "" : "hidden"}
-      bind:this={inputDisplay}
+    <button class="round-btn" onclick={() => setSettingsVisibility(true)}
+      >設定</button
     >
-      {showInputDisplay ? input : ""}
-    </div>
-    <div class="test-content">
-      {#each content as char, index (index)}
-        <div class="char" id="char-{index}" onmouseenter={cancelInput}>
-          <a
-            href={"https://www.hkcards.com/cj/cj-char-" + char + ".html"}
-            target="_blank"
-          >
-            {#if index === currentWordIndex}
-              <div class={focused ? "" : "inactive"}>
-                <div class="current-char">
-                  <p>{char}</p>
-                </div>
+  {/if}
+  <div class="info-bar">
+    {#if gameState !== 3}
+      {#if timeLimit > 0}
+        <p>剩餘時間: {Math.ceil(timeLimit - timeElapsed / 1000)}秒</p>
+      {/if}
+      <p>時間: {(timeTakenInMs / 1000).toFixed(2) + "s"}</p>
+      <p>速度: {WPM.toFixed(1)}WPM</p>
+      <p>準確度: {(accuracy * 100).toFixed(1) + "%"}</p>
+      <p>正確: {correctWords}字</p>
+      <p>錯誤: {wrongWords}字</p>
+      <p>分數: {points}</p>
+    {/if}
+  </div>
+  <input
+    type="text"
+    id="type-input"
+    placeholder={gameState === GameState.PLAY ? "" : "在這裡開始打字"}
+    oncompositionupdate={compoUpdate}
+    oncompositionend={compoEnd}
+    oninput={handlers(startTimer, halfInput)}
+    onkeydown={keyDown}
+    onfocus={() => (focused = true)}
+    onfocusout={() => (focused = false)}
+    bind:value={input}
+    bind:this={inputBox}
+  />
+  <div
+    id="input-display"
+    class={showInputDisplay ? "" : "hidden"}
+    bind:this={inputDisplay}
+  >
+    {showInputDisplay ? input : ""}
+  </div>
+  <div class="test-content">
+    {#each content as char, index (index)}
+      <div class="char" id="char-{index}" onmouseenter={cancelInput}>
+        <a
+          href={"https://www.hkcards.com/cj/cj-char-" + char + ".html"}
+          target="_blank"
+        >
+          {#if index === currentWordIndex}
+            <div class={focused ? "" : "inactive"}>
+              <div class="current-char">
+                <p>{char}</p>
               </div>
-            {:else if wrongIndexes.includes(index)}
-              <p class="wrong">{char}</p>
-            {:else if correctIndexes.includes(index)}
-              <p class="correct">{char}</p>
-            {:else}
-              <p>{char}</p>
-            {/if}
-          </a>
-        </div>
-      {/each}
-    </div>
-
-    {#if gameState !== GameState.START}
-      <button class="round-btn" onclick={restart}>重新開始</button>
-    {/if}
-    {#if gameState === GameState.FINISH}
-      <button class="round-btn" onclick={() => setResultsPanelVisibility(true)}
-        >查看成績</button
-      >
-    {/if}
-
-    <div class="settings-screen {settingsOpen ? '' : 'hidden'}">
-      <div class="settings-panel">
-        <h2>設定</h2>
-        <div class="passage-select">
-          <p>文章</p>
-          <select bind:value={content} id="passage" placeholder="選擇文章">
-            {#each passages as passage}
-              <option value={passage.content}>{passage.title}</option>
-            {/each}
-          </select>
-        </div>
-        <textarea bind:value={content} name="content" id="" cols="30" rows="10"
-        ></textarea>
-        <div class="time-select">
-          <p>時間限制</p>
-          <select bind:value={timeLimit} id="time" placeholder="">
-            <option value={0}>無時限</option>
-            {#each timeLimits as limit}
-              <option value={limit}>{timeToChinese(limit)}</option>
-            {/each}
-          </select>
-        </div>
-        <button onclick={() => setSettingsVisibility(false)}>關閉</button>
+            </div>
+          {:else if wrongIndexes.includes(index)}
+            <p class="wrong">{char}</p>
+          {:else if correctIndexes.includes(index)}
+            <p class="correct">{char}</p>
+          {:else}
+            <p>{char}</p>
+          {/if}
+        </a>
       </div>
+    {/each}
+  </div>
+
+  {#if gameState !== GameState.START}
+    <button class="round-btn" onclick={restart}>重新開始</button>
+  {/if}
+  {#if gameState === GameState.FINISH}
+    <button class="round-btn" onclick={() => setResultsPanelVisibility(true)}
+      >查看成績</button
+    >
+  {/if}
+
+  <div class="settings-screen {settingsOpen ? '' : 'hidden'}">
+    <div class="settings-panel">
+      <h2>設定</h2>
+      <div class="passage-select">
+        <p>文章</p>
+        <select bind:value={content} id="passage" placeholder="選擇文章">
+          {#each passages as passage}
+            <option value={passage.content}>{passage.title}</option>
+          {/each}
+        </select>
+      </div>
+      <textarea bind:value={content} name="content" id="" cols="30" rows="10"
+      ></textarea>
+      <div class="time-select">
+        <p>時間限制</p>
+        <select bind:value={timeLimit} id="time" placeholder="">
+          <option value={0}>無時限</option>
+          {#each timeLimits as limit}
+            <option value={limit}>{timeToChinese(limit)}</option>
+          {/each}
+        </select>
+      </div>
+      <button onclick={() => setSettingsVisibility(false)}>關閉</button>
     </div>
+  </div>
 
-    <div class="results-screen" bind:this={resultsScreen}>
-      <div class="results-panel">
-        <div class="results-info">
-          <h2>成績</h2>
-          <p>準確度：{(accuracy * 100).toFixed(1) + "%"}</p>
-          <p>速度：{WPM.toFixed(1)}WPM</p>
-          <p>正確：{correctIndexes.length}字</p>
-          <p>錯誤：{wrongIndexes.length}字</p>
-          <p>底分：{basePoints}</p>
+  <div class="results-screen" bind:this={resultsScreen}>
+    <div class="results-panel">
+      <div class="results-info">
+        <h2>成績</h2>
+        <p>準確度：{(accuracy * 100).toFixed(1) + "%"}</p>
+        <p>速度：{WPM.toFixed(1)}WPM</p>
+        <p>正確：{correctIndexes.length}字</p>
+        <p>錯誤：{wrongIndexes.length}字</p>
+        <p>底分：{basePoints}</p>
 
-          <p>總分：{points}</p>
-          <p>
-            正確加分：{correctIndexes.length * charPoints.correct} ({correctIndexes.length}字*{charPoints.correct}分/字)
-          </p>
-          <p>
-            錯誤扣分：{wrongIndexes.length * charPoints.wrong} ({wrongIndexes.length}字*{charPoints.wrong}分/字)
-          </p>
-          <p>
-            準確度加分：{accuracyPoint}
-            {#if accuracyPoint > 0}
-              ({basePoints} * {Math.round(accuracyMultiplier * 100) + "%"}) ({accuracyCutoff}%或以上)
-            {/if}
-          </p>
-          <p>
-            速度加分：{speedPoint}
-            {#if speedPoint > 0}
-              ({basePoints} * {Math.round(speedMultiplier * 100) + "%"}) ({speedCutoff}WPM或以上)
-            {/if}
-          </p>
-          <p>
-            時間加分：{timePoint}
-            {#if timePoint > 0}
-              ({timeLeft}秒 * {bonus.timeLeft})
-            {/if}
-          </p>
-        </div>
-        <div class="panel-buttons">
-          <button onclick={() => setResultsPanelVisibility(false)}>關閉</button
-          >
-          <button
-            onclick={() => {
-              setResultsPanelVisibility(false);
-              restart();
-            }}>嚟多次</button
-          >
-        </div>
+        <p>總分：{points}</p>
+        <p>
+          正確加分：{correctIndexes.length * charPoints.correct} ({correctIndexes.length}字*{charPoints.correct}分/字)
+        </p>
+        <p>
+          錯誤扣分：{wrongIndexes.length * charPoints.wrong} ({wrongIndexes.length}字*{charPoints.wrong}分/字)
+        </p>
+        <p>
+          準確度加分：{accuracyPoint}
+          {#if accuracyPoint > 0}
+            ({basePoints} * {Math.round(accuracyMultiplier * 100) + "%"}) ({accuracyCutoff}%或以上)
+          {/if}
+        </p>
+        <p>
+          速度加分：{speedPoint}
+          {#if speedPoint > 0}
+            ({basePoints} * {Math.round(speedMultiplier * 100) + "%"}) ({speedCutoff}WPM或以上)
+          {/if}
+        </p>
+        <p>
+          時間加分：{timePoint}
+          {#if timePoint > 0}
+            ({timeLeft}秒 * {bonus.timeLeft})
+          {/if}
+        </p>
+      </div>
+      <div class="panel-buttons">
+        <button onclick={() => setResultsPanelVisibility(false)}>關閉</button>
+        <button
+          onclick={() => {
+            setResultsPanelVisibility(false);
+            restart();
+          }}>嚟多次</button
+        >
       </div>
     </div>
   </div>
-</body>
+</div>
 
 <style>
   .passage-select,

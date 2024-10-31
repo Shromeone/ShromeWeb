@@ -29,6 +29,6 @@ button {
 :root {
     --dark: rgb(75, 75, 75);
     --light: lightgrey;
-    --primary-color: darkred;
-    --secondary-color: green;
+    --primary-color: pink;
+    --secondary-color: yellow;
 }

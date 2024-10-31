@@ -75,30 +75,28 @@
   }
 </script>
 
-<body>
-  <h2>六合彩神器</h2>
-  <div class="gen-btn-div">
-    <button class="gen-btn" onclick={generateNumbers}>發發發！</button>
-  </div>
-  <p>中獎號碼：</p>
-  <div class="nums">
-    {#each currentNumbers as num, idx}
-      <p
-        id="ball-{idx}"
-        style="border: 2.5vw solid {getBallColor(num)};"
-        class="result-num ball-animation hidden"
-      >
-        {num}
-      </p>
-    {/each}
-  </div>
-  <select name="" id="" bind:value={chooseOptions}>
-    <option value={ChooseOptions.All}>抽晒全部號碼</option>
-    <option value={ChooseOptions.NoHot}>唔抽熱門號碼</option>
-    <option value={ChooseOptions.OnlyHot}>淨係抽熱門號碼</option>
-  </select>
-  <p>熱門號碼: {hotNumbers}</p>
-</body>
+<h2>六合彩神器</h2>
+<div class="gen-btn-div">
+  <button class="gen-btn" onclick={generateNumbers}>發發發！</button>
+</div>
+<p>中獎號碼：</p>
+<div class="nums">
+  {#each currentNumbers as num, idx}
+    <p
+      id="ball-{idx}"
+      style="border: 2.5vw solid {getBallColor(num)};"
+      class="result-num ball-animation hidden"
+    >
+      {num}
+    </p>
+  {/each}
+</div>
+<select name="" id="" bind:value={chooseOptions}>
+  <option value={ChooseOptions.All}>抽晒全部號碼</option>
+  <option value={ChooseOptions.NoHot}>唔抽熱門號碼</option>
+  <option value={ChooseOptions.OnlyHot}>淨係抽熱門號碼</option>
+</select>
+<p>熱門號碼: {hotNumbers}</p>
 
 <style>
   body {

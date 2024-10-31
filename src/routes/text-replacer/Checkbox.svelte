@@ -1,15 +1,12 @@
 <script>
   // @ts-nocheck
 
-  import { createEventDispatcher } from "svelte";
-  /** @type {{children?: import('svelte').Snippet}} */
-  let { children } = $props();
-  const dispatch = createEventDispatcher();
+  let { children, click } = $props();
   let checked = $state(false);
 
   function toggleCheck() {
     checked = !checked;
-    dispatch("click", checked);
+    click();
   }
 </script>
 
