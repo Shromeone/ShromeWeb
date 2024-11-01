@@ -6,31 +6,74 @@
       this.dirInRadians = dirInRadians;
     }
   }
+
+  class ParticleHit {
+    currentFrame = 0;
+    constructor(x, y, frame) {
+      this.x = x;
+      this.y = y;
+      this.frame = frame;
+    }
+  }
   let alreadySetup = false;
 
+  let temperatureKelvin = $state(298);
+  let particleCount = $state(10);
+  let hitCount = $state(0);
+
   /** @type {HTMLCanvasElement} */
-  let particle = new Particle(100, 100, 5);
   /** @type {Array<Particle>} */
   let particles = [];
+  /** @type {Array<ParticleHit>} */
+  let particleHits = [];
   let canvas = $state();
   setInterval(drawCanvas, 10);
-  const particleSpeed = 6;
+  let particleSpeed = $derived(Math.sqrt(temperatureKelvin) * 0.15);
   const particleRadius = 5;
   /** @type {CanvasRenderingContext2D} */
   let ctx;
-  function setup() {
-    if (!canvas) return;
 
-    for (let i = 0; i < 20; i++) {
+  $effect((particleCount) => spawnParticles());
+
+  function spawnParticles() {
+    particles = [];
+    for (let i = 0; i < particleCount; i++) {
       let randomDirection = Math.random() * 2 * Math.PI;
-      let randomX = Math.random() * canvas.width;
-      let randomY = Math.random() * canvas.height;
+      let randomX =
+        particleRadius * 4 +
+        Math.random() * (canvas.width - particleRadius * 8);
+      let randomY =
+        particleRadius * 4 +
+        Math.random() * (canvas.height - particleRadius * 8);
       particles.push(new Particle(randomX, randomY, randomDirection));
     }
+  }
+
+  function setup() {
+    if (!canvas) return;
+    spawnParticles();
+
+    temperatureKelvin = 298;
+    particleCount = 20;
     alreadySetup = true;
-    particle.x = canvas.width / 2;
-    particle.y = 50;
+    hitCount = 0;
     ctx = canvas.getContext("2d");
+  }
+
+  function drawPartcleHits() {
+    for (let h of particleHits) {
+      ctx.beginPath();
+      ctx.arc(h.x, h.y, 7, -1, 1);
+      ctx.fillStyle = "red";
+      ctx.fill();
+      ctx.closePath();
+
+      h.currentFrame += 1;
+
+      if (h.currentFrame > h.frame) {
+        particleHits.pop(h);
+      }
+    }
   }
 
   function drawBall() {
@@ -61,6 +104,12 @@
     ) {
       p.dirInRadians = Math.PI - p.dirInRadians;
     }
+
+    if (p.x + dx + particleRadius > canvas.width) {
+      hitCount += 1;
+      particleHits.push(new ParticleHit(p.x, p.y, 20));
+    }
+
     p.x += dx;
     p.y += dy;
   }
@@ -73,6 +122,7 @@
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawBall();
+    drawPartcleHits();
     for (let p of particles) {
       updateParticlePosition(p);
     }
@@ -81,7 +131,25 @@
 
 <canvas bind:this={canvas} width="420" , height="420"></canvas>
 
-<button onclick={drawCanvas}>Draw Canvas</button>
+<button onclick={setup}>Reset</button>
+<p>{hitCount} hits</p>
+<input
+  type="range"
+  min="0"
+  max="1500"
+  bind:value={temperatureKelvin}
+  class="slider"
+/>
+<span>{temperatureKelvin - 273}°C / {temperatureKelvin}°K</span>
+
+<input
+  type="range"
+  min="0"
+  max="500"
+  bind:value={particleCount}
+  class="slider"
+/>
+<span>{particleCount} particle{particleCount > 1 ? "s" : ""}</span>
 
 <style>
   canvas {
