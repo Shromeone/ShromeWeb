@@ -1,6 +1,5 @@
 <script>
   import { run, handlers } from "svelte/legacy";
-
   // @ts-nocheck
   import { timeToChinese } from "$lib/utils/time-converter.js";
   import { passages } from "./passages.json";
@@ -58,8 +57,8 @@
   let timeLeft = $state(0);
 
   let isTimeUp = false;
-  const scrollDeadzone = 500;
-  const scrollOffset = 100;
+  const autoScrollPercentage = 0.3;
+  const autoScrollOffset = 0.1;
   const inputBoxOffset = {
     x: 0,
     y: 20,
@@ -77,6 +76,7 @@
       if (document.activeElement === typePrep) return;
       if (settingsOpen) return;
       e.preventDefault();
+      console.log("focused");
       inputBox.focus();
     };
   });
@@ -87,6 +87,7 @@
 
   function tryFocus() {
     if (document.activeElement === inputBox) return;
+    if (document.activeElement.localName === "button") return;
     inputBox.focus();
   }
 
@@ -97,7 +98,7 @@
   }
 
   function clearInput() {
-    console.log("cleared input");
+    // console.log("cleared input");
     inputBox.innerHTML = "";
     input = "";
   }
@@ -197,25 +198,24 @@
 
     isCompo = false;
     validateInput(e.data);
-    console.log("half input");
-    console.log(e.inputType);
+    // console.log(e.inputType);
     setTimeout(clearInput, 0);
   }
 
   function updateScroll() {
     const currentChar = document.querySelector(`#char-${currentWordIndex}`);
     const y = currentChar.getBoundingClientRect().top + scrollY;
-    if (Math.abs(scrollY - y) < scrollDeadzone) return;
-    console.log("scroll");
-    scroll({ top: y - scrollOffset, behavior: "smooth" });
+    const percentage = Math.abs(scrollY - y) / innerHeight;
+    // console.log(percentage);
+    if (percentage < autoScrollPercentage) return;
+    let scrY = scrollY;
+    scroll({ top: y - autoScrollOffset * innerHeight, behavior: "smooth" });
+    // scroll({ top: y - autoScrollOffset * innerHeight, behavior: "smooth" });
   }
 
   function validateInput(word) {
     if (gameState === GameState.FINISH) return;
-    console.log("input: " + input);
-    console.log("innerHTML: " + inputBox.innerHTML);
     if (typeCancelled) {
-      console.log("type cancelled");
       return;
     }
     for (let i = 0; i < word.length; i++) {
@@ -266,9 +266,9 @@
     const speedPoints = Object.keys(bonus.speed);
     speedPoints.sort((a, b) => Number(b) - Number(a));
     for (let speed of speedPoints) {
-      console.log(WPM, Number(speed));
+      // console.log(WPM, Number(speed));
       if (WPM >= Number(speed)) {
-        console.log(`speed: ${bonus.speed[speed]}`);
+        // console.log(`speed: ${bonus.speed[speed]}`);
         speedCutoff = speed;
         speedMultiplier = bonus.speed[speed];
         return Math.round(basePoints * speedMultiplier);
@@ -281,9 +281,9 @@
     const accuracyPoints = Object.keys(bonus.accuracy);
     accuracyPoints.sort((a, b) => Number(b) - Number(a));
     for (let accu of accuracyPoints) {
-      console.log(accuracy * 100, Number(accu));
+      // console.log(accuracy * 100, Number(accu));
       if (accuracy * 100 >= Number(accu)) {
-        console.log(`accu: ${bonus.accuracy[accu]}`);
+        // console.log(`accu: ${bonus.accuracy[accu]}`);
         accuracyCutoff = accu;
         accuracyMultiplier = bonus.accuracy[accu];
         return Math.round(basePoints * accuracyMultiplier);
@@ -422,8 +422,18 @@
     {/each}
   </div>
 
+  {#if gameState === GameState.PLAY}
+    <button class="round-btn" onmouseenter={cancelInput} onclick={finishGame}
+      >結束遊戲</button
+    >
+  {/if}
   {#if gameState !== GameState.START}
-    <button class="round-btn" onclick={restart}>重新開始</button>
+    <button class="round-btn" onmouseenter={cancelInput} onclick={restart}
+      >重新開始</button
+    >
+  {/if}
+  {#if gameState === GameState.PLAY}
+    <div style="height: 100vh"></div>
   {/if}
   {#if gameState === GameState.FINISH}
     <button class="round-btn" onclick={() => setResultsPanelVisibility(true)}
@@ -622,10 +632,10 @@
   .test-content p {
     display: inline-block;
     font-family: "Noto Serif TC";
-    font-size: 2rem;
-    margin: 5px;
-    width: 2.5rem;
-    height: 2.5rem;
+    font-size: max(18px, 2.3vw);
+    margin: max(4px, 0.3vw);
+    width: max(24px, 3vw);
+    height: max(24px, 3vw);
     border: 1px solid rgba(255, 255, 255, 0.416);
     text-align: center;
     vertical-align: middle;
