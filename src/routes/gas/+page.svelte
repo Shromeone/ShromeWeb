@@ -107,7 +107,7 @@
 
     if (p.x + dx + particleRadius > canvas.width) {
       hitCount += 1;
-      particleHits.push(new ParticleHit(p.x, p.y, 20));
+      particleHits.push(new ParticleHit(canvas.width, p.y, 20));
     }
 
     p.x += dx;
