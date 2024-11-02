@@ -96,6 +96,7 @@
       p.y + dy + particleRadius < 0
     ) {
       p.dirInRadians *= -1;
+      hitCount += 1;
     }
 
     if (
@@ -103,10 +104,10 @@
       p.x + dx + particleRadius < 0
     ) {
       p.dirInRadians = Math.PI - p.dirInRadians;
+      hitCount += 1;
     }
 
     if (p.x + dx + particleRadius > canvas.width) {
-      hitCount += 1;
       particleHits.push(new ParticleHit(canvas.width, p.y, 20));
     }
 
